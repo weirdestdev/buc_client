@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Cloud, CloudRain, Sun, CloudSun, Newspaper } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,13 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Weather data types
+// Типизация данных погоды
 type WeatherData = {
   temperature: number;
   condition: 'sunny' | 'cloudy' | 'rainy' | 'partly-cloudy';
 };
 
-// News item type
+// Тип новости
 type NewsItem = {
   id: number;
   title: string;
@@ -22,14 +21,14 @@ type NewsItem = {
 
 export default function InfoWidgets() {
   const isMobile = useIsMobile();
-  
-  // Weather data (mocked)
+
+  // Состояние для погоды
   const [weather, setWeather] = useState<WeatherData>({
-    temperature: 24,
+    temperature: 0,
     condition: 'sunny'
   });
-  
-  // News data (mocked)
+
+  // Состояние для новостей (мок)
   const [news, setNews] = useState<NewsItem[]>([
     { 
       id: 1, 
@@ -50,25 +49,41 @@ export default function InfoWidgets() {
       url: "#"
     }
   ]);
-  
-  // Simulating data updates
+
+  // Запрос данных о погоде с использованием WeatherAPI.com
   useEffect(() => {
-    if (isMobile) return; // Don't run updates on mobile
-    
-    const interval = setInterval(() => {
-      // Occasionally update weather
-      if (Math.random() > 0.8) {
-        const conditions: Array<'sunny' | 'cloudy' | 'rainy' | 'partly-cloudy'> = ['sunny', 'cloudy', 'rainy', 'partly-cloudy'];
-        setWeather({
-          temperature: Math.floor(22 + Math.random() * 5),
-          condition: conditions[Math.floor(Math.random() * conditions.length)]
-        });
+    async function fetchWeather() {
+      try {
+        const response = await fetch(
+          `https://api.weatherapi.com/v1/current.json?key=9ef44812e32745a4838171922252703&q=Palma de Mallorca&aqi=no`
+        );
+        const data = await response.json();
+        // Получаем температуру из data.current.temp_c
+        const temperature = Math.round(data.current.temp_c);
+        // Получаем описание погоды, например "Sunny", "Partly cloudy", "Cloudy", "Rain"
+        const conditionText = data.current.condition.text.toLowerCase();
+        let condition: 'sunny' | 'cloudy' | 'rainy' | 'partly-cloudy' = 'sunny';
+        
+        if (conditionText.includes('sunny')) {
+          condition = 'sunny';
+        } else if (conditionText.includes('cloudy') && conditionText.includes('partly')) {
+          condition = 'partly-cloudy';
+        } else if (conditionText.includes('cloudy')) {
+          condition = 'cloudy';
+        } else if (conditionText.includes('rain')) {
+          condition = 'rainy';
+        } else {
+          condition = 'sunny';
+        }
+        
+        setWeather({ temperature, condition });
+      } catch (error) {
+        console.error("Error fetching weather data", error);
       }
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [isMobile]);
-  
+    }
+    fetchWeather();
+  }, []);
+
   const getWeatherIcon = () => {
     switch (weather.condition) {
       case 'sunny':
@@ -83,20 +98,20 @@ export default function InfoWidgets() {
         return <Sun className="w-6 h-6 text-yellow-500" />;
     }
   };
-  
+
   const handleNewsClick = () => {
     window.open('https://www.majorcadailybulletin.com', '_blank');
   };
-  
-  // Don't render anything on mobile, but make sure all hooks are called first
+
+  // Не рендерим на мобильных устройствах
   if (isMobile) {
     return null;
   }
-  
+
   return (
     <div className="fixed bottom-4 right-4 z-30 space-y-2 lg:flex lg:space-y-0 lg:space-x-2 lg:bottom-4 lg:right-4">
       <TooltipProvider>
-        {/* Weather Widget */}
+        {/* Виджет погоды */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Card className="w-10 h-10 lg:w-auto lg:h-auto glass-effect overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md group">
@@ -113,7 +128,7 @@ export default function InfoWidgets() {
           </TooltipContent>
         </Tooltip>
         
-        {/* News Widget */}
+        {/* Виджет новостей */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Card 

@@ -1,0 +1,200 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 5%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 80%;
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    @apply overflow-x-hidden; /* Prevent horizontal scrolling */
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans selection:bg-primary/10 selection:text-primary overflow-x-hidden; /* Added overflow-x-hidden to prevent horizontal scrolling */
+  }
+
+  /* Custom for Business Unit Club */
+  .glass-effect {
+    @apply backdrop-blur-lg bg-white/70 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.06)];
+  }
+
+  .dark-glass-effect {
+    @apply backdrop-blur-lg bg-black/70 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)];
+  }
+
+  .hover-lift {
+    @apply transition-all duration-500 hover:translate-y-[-5px] hover:shadow-xl;
+  }
+
+  /* Section padding adjusted for mobile */
+  .section-padding {
+    @apply py-16 md:py-24 px-4 md:px-6 lg:px-24;
+  }
+
+  /* Prevent screenshots */
+  .prevent-screenshot {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  /* Custom tri-split hover effect */
+  .tri-split-item {
+    @apply relative overflow-hidden transition-all duration-700 ease-apple;
+  }
+
+  .tri-split-item:hover {
+    @apply z-10 shadow-2xl;
+  }
+
+  .tri-split-content {
+    @apply absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity duration-500 bg-gradient-to-b from-black/60 to-black/80;
+  }
+
+  .tri-split-item:hover .tri-split-content {
+    @apply opacity-100;
+  }
+
+  .tri-split-item:hover .tri-split-image {
+    @apply scale-105;
+  }
+
+  .tri-split-image {
+    @apply w-full h-full object-cover transition-transform duration-700 ease-apple;
+  }
+
+  /* Smooth image loading */
+  .image-loading {
+    @apply relative overflow-hidden bg-muted;
+  }
+
+  .image-loading img {
+    @apply transition-opacity duration-500 ease-in-out opacity-0;
+  }
+
+  .image-loading img.loaded {
+    @apply opacity-100;
+  }
+
+  /* Portfolio filter styles */
+  .filter-btn {
+    @apply px-4 py-2 rounded-full text-sm font-medium transition-all duration-300;
+  }
+
+  .filter-btn.active {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .filter-btn:not(.active) {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+
+  /* Scroll animations */
+  .reveal {
+    @apply opacity-0 translate-y-10 transition-all duration-1000 ease-apple;
+  }
+
+  .reveal.active {
+    @apply opacity-100 translate-y-0;
+  }
+
+  /* Video background with overlay */
+  .video-background {
+    @apply absolute inset-0 w-full h-full object-cover z-0;
+  }
+
+  .video-overlay {
+    @apply absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70 z-10;
+  }
+
+  /* Clipped text */
+  .clip-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes enhanced-gradient-slow {
+    0% {
+      background-position: 0% 50%;
+      background-size: 200% 200%;
+    }
+    50% {
+      background-position: 100% 50%;
+      background-size: 250% 250%;
+    }
+    100% {
+      background-position: 0% 50%;
+      background-size: 200% 200%;
+    }
+  }
+
+  .animate-gradient {
+    animation: gradient 8s ease infinite;
+    background-size: 200% 200%;
+  }
+
+  .animate-gradient-slow {
+    animation: gradient 12s ease infinite;
+    background-size: 200% 200%;
+  }
+
+  .animate-gradient:hover {
+    animation: enhanced-gradient 4s ease infinite;
+  }
+
+  .animate-gradient-slow:hover {
+    animation: enhanced-gradient-slow 8s ease infinite;
+  }
+}

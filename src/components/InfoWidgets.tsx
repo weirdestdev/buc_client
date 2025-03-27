@@ -55,7 +55,7 @@ export default function InfoWidgets() {
     async function fetchWeather() {
       try {
         const response = await fetch(
-          `https://api.weatherapi.com/v1/current.json?key=9ef44812e32745a4838171922252703&q=Palma de Mallorca&aqi=no`
+          `http://localhost:3000/api/weather?q=Palma`
         );
         const data = await response.json();
         // Получаем температуру из data.current.temp_c

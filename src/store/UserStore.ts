@@ -57,11 +57,8 @@ export default class UserStore {
 
   async loginAdmin(email: string, password: string): Promise<void> {
     const decodedUser = await adminLogin(email, password);
-
-    if(this.user === null) {
-      this.setIsAuth(true);
-      this.setUser(decodedUser);
-    }
+    this.setIsAuth(true);
+    this.setUser(decodedUser);
   }
 
   /**
@@ -83,6 +80,7 @@ export default class UserStore {
 
   logout(): void {
     localStorage.removeItem('token'); // удаляем токен из localStorage
+    localStorage.removeItem('admin-token');
     this.setUser(null);               // очищаем данные пользователя
     this.setIsAuth(false);            // сбрасываем флаг авторизации
   }

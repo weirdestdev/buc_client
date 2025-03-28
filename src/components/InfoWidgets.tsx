@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, CloudRain, Sun, CloudSun, Newspaper } from 'lucide-react';
+import { Cloud, CloudRain, Sun, CloudSun, Newspaper, Loader } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -27,6 +27,7 @@ export default function InfoWidgets() {
     temperature: 0,
     condition: 'sunny'
   });
+  const [weatherLoading, setWeatherLoading] = useState(true);
 
   // Состояние для новостей (мок)
   const [news, setNews] = useState<NewsItem[]>([
@@ -55,7 +56,7 @@ export default function InfoWidgets() {
     async function fetchWeather() {
       try {
         const response = await fetch(
-          `http://localhost:3000/api/weather?q=Palma`
+          `${import.meta.env.VITE_SERVER_URL}/api/weather?q=Palma`
         );
         const data = await response.json();
         // Получаем температуру из data.current.temp_c
@@ -79,6 +80,8 @@ export default function InfoWidgets() {
         setWeather({ temperature, condition });
       } catch (error) {
         console.error("Error fetching weather data", error);
+      } finally {
+        setWeatherLoading(false);
       }
     }
     fetchWeather();
@@ -116,10 +119,16 @@ export default function InfoWidgets() {
           <TooltipTrigger asChild>
             <Card className="w-10 h-10 lg:w-auto lg:h-auto glass-effect overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md group">
               <CardContent className="p-2 lg:p-3 flex items-center">
-                {getWeatherIcon()}
-                <span className="hidden lg:inline ml-2 text-sm font-medium">
-                  Palma: {weather.temperature}°C
-                </span>
+                {weatherLoading ? (
+                  <Loader className="w-6 h-6 animate-spin text-gray-500" />
+                ) : (
+                  <>
+                    {getWeatherIcon()}
+                    <span className="hidden lg:inline ml-2 text-sm font-medium">
+                      Palma: {weather.temperature}°C
+                    </span>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TooltipTrigger>

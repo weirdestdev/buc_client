@@ -57,8 +57,11 @@ export default class UserStore {
 
   async loginAdmin(email: string, password: string): Promise<void> {
     const decodedUser = await adminLogin(email, password);
-    this.setIsAuth(true);
-    this.setUser(decodedUser);
+
+    if(this.user === null) {
+      this.setIsAuth(true);
+      this.setUser(decodedUser);
+    }
   }
 
   /**

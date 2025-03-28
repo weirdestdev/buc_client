@@ -28,12 +28,19 @@ const App = observer(() => {
   };
 
   useEffect(() => {
-    check().then(data => {
-      userStore.setIsAuth(true);
-      userStore.setUser(data); // сохраняем данные пользователя в сторе
-      console.log(data);
-    });
-  }, []);
+    check()
+      .then((data) => {
+        userStore.setIsAuth(true);
+        userStore.setUser(data); // сохраняем данные пользователя в сторе
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error("Ошибка проверки:", error);
+      })
+      .finally(() => {
+        setLoading(false); // Устанавливаем загрузку в false после завершения запроса
+      });
+  }, [userStore]);
 
   // Если загрузка завершена и статус пользователя "blocked", отображаем всегда страницу Blocked
   if (!loading && userStore.user && userStore.user.status === "blocked") {

@@ -18,9 +18,6 @@ const Blocked = () => {
         <p className="text-xl md:text-2xl text-white/70 mb-10">
           The page you are trying to access has been blocked. Please contact your administrator if you believe this is an error.
         </p>
-        <a href="/" className="inline-block bg-white text-black px-8 py-3 rounded-full font-medium transition-all hover:bg-white/90">
-          Return to Home
-        </a>
       </div>
     </div>
   );

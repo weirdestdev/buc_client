@@ -21,11 +21,10 @@ import {
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { PenSquare, Trash2, Plus, X, Star } from 'lucide-react';
-import { Context } from '../../main';
+import { Context } from '../main';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
 
-// Определим тип для формы списка (объявления)
 interface IListFormData {
   name: string;
   description: string;
@@ -41,6 +40,7 @@ interface IListFormData {
 type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
 const ListingManager = observer(() => {
+  // Используем rentTimeStore (в котором, помимо времени аренды, должны быть данные категорий и объявлений)
   const { rentTimeStore } = useContext(Context)!;
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -61,11 +61,13 @@ const ListingManager = observer(() => {
 
   useEffect(() => {
     rentTimeStore.loadRentals();
+    rentTimeStore.loadCategories();
+    rentTimeStore.loadRentTimes();
   }, [rentTimeStore]);
 
-  // Фильтрация объявлений по вкладкам, основываясь на названии категории (из включенной модели Categories)
+  // Фильтрация объявлений по вкладкам по названию категории (приводим к нижнему регистру)
   const filteredListings = rentTimeStore.rentals.filter((listing: any) => {
-    const catName = listing.Category?.name?.toLowerCase() || '';
+    const catName = listing.category?.name?.toLowerCase() || '';
     if (activeTab === 'Our Portfolio') {
       return ['villa', 'apartment', 'plot', 'building'].includes(catName);
     }
@@ -76,11 +78,10 @@ const ListingManager = observer(() => {
     return !(['villa', 'apartment', 'plot', 'building', 'car', 'yacht'].includes(catName));
   });
 
-  // Функция для переключения featured через обновление объявления (отправляем минимальный payload)
+  // Переключение featured через обновление объявления (отправляем FormData с единственным полем)
   const toggleFeatured = async (listing: any) => {
     const form = new FormData();
     form.append('featured', JSON.stringify(!listing.featured));
-    // Вызов обновления с минимальными данными – остальные поля останутся прежними
     await rentTimeStore.updateRental(listing.id, form);
     await rentTimeStore.loadRentals();
   };
@@ -142,8 +143,7 @@ const ListingManager = observer(() => {
     form.append('categoryId', formData.categoryId);
     form.append('rentTimeId', formData.rentTimeId);
 
-    // Для добавления объявлений – файлы можно выбрать.
-    // При редактировании, как сказано, поле файлов не изменяется, а отображаются уже загруженные изображения.
+    // Если объявление новое – добавляем файлы; при редактировании файлы не меняются
     if (!editingListing && files) {
       Array.from(files).forEach((file) => {
         form.append('images', file);
@@ -166,16 +166,15 @@ const ListingManager = observer(() => {
     }
   };
 
-  // Для категории выводим иконку и название
+  // Отображаем категорию: выводим иконку (если есть) и название
   const renderCategory = (listing: any) => {
-    const category = listing.Category;
+    const category = listing.category;
     if (!category) return '-';
-    const icon = category.icon;
     return (
       <div className="flex items-center space-x-2">
-        {icon && (
+        {category.icon && (
           <img
-            src={icon.startsWith('http') ? icon : `${SERVER_URL}${icon}`}
+            src={category.icon.startsWith('http') ? category.icon : `${SERVER_URL}${category.icon}`}
             alt={category.name}
             className="h-6 w-6 object-cover"
           />
@@ -185,25 +184,28 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Для renttime выводим только название
+  // Отображаем время аренды – только название
   const renderRentTime = (listing: any) => {
-    return listing.RentTime?.name || '-';
+    return listing.rent_time?.name || '-';
   };
 
-  // При редактировании, если у объявления есть изображения, отобразим их (максимум 15)
+  // При редактировании, если есть изображения, отображаем до 15 миниатюр
   const renderExistingImages = (listing: any) => {
-    if (!listing || !listing.images || listing.images.length === 0) return null;
-    const images = listing.images.slice(0, 15);
+    if (!listing || !listing.rentals_images || listing.rentals_images.length === 0) return null;
+    const images = listing.rentals_images.slice(0, 15);
     return (
       <div className="flex flex-wrap gap-2 mt-2">
-        {images.map((img: string, index: number) => (
-          <img
-            key={index}
-            src={img.startsWith('http') ? img : `${SERVER_URL}${img}`}
-            alt={`listing-${index}`}
-            className="h-12 w-12 object-cover rounded"
-          />
-        ))}
+        {images.map((imgObj: any, index: number) => {
+          const img = imgObj.image;
+          return (
+            <img
+              key={index}
+              src={img.startsWith('http') ? img : `${SERVER_URL}${img}`}
+              alt={`listing-${index}`}
+              className="h-12 w-12 object-cover rounded"
+            />
+          );
+        })}
       </div>
     );
   };
@@ -251,27 +253,16 @@ const ListingManager = observer(() => {
                 <TableCell>{listing.price}</TableCell>
                 <TableCell>
                   <Button variant="ghost" onClick={() => toggleFeatured(listing)}>
-                    <Star
-                      className="h-4 w-4"
-                      color={listing.featured ? "gold" : "gray"}
-                    />
+                    <Star className="h-4 w-4" color={listing.featured ? "gold" : "gray"} />
                   </Button>
                 </TableCell>
                 <TableCell>{renderCategory(listing)}</TableCell>
                 <TableCell>{renderRentTime(listing)}</TableCell>
                 <TableCell className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditDialog(listing)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => openEditDialog(listing)}>
                     <PenSquare className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteListing(listing.id)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handleDeleteListing(listing.id)}>
                     <Trash2 className="h-4 w-4 text-red-600" />
                   </Button>
                 </TableCell>
@@ -291,13 +282,9 @@ const ListingManager = observer(() => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>
-              {editingListing ? "Edit Listing" : "Add Listing"}
-            </DialogTitle>
+            <DialogTitle>{editingListing ? "Edit Listing" : "Add Listing"}</DialogTitle>
             <DialogDescription>
-              {editingListing
-                ? "Edit the listing details"
-                : "Fill in the details for the new listing"}
+              {editingListing ? "Edit the listing details" : "Fill in the details for the new listing"}
             </DialogDescription>
           </DialogHeader>
 
@@ -308,9 +295,7 @@ const ListingManager = observer(() => {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Listing Name"
                 required
               />
@@ -321,9 +306,7 @@ const ListingManager = observer(() => {
               <Input
                 id="description"
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Description"
               />
             </div>
@@ -333,9 +316,7 @@ const ListingManager = observer(() => {
               <Input
                 id="address"
                 value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="Address"
               />
             </div>
@@ -346,9 +327,7 @@ const ListingManager = observer(() => {
                 id="price"
                 type="number"
                 value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 placeholder="Price"
                 required
               />
@@ -359,9 +338,7 @@ const ListingManager = observer(() => {
               <Input
                 id="unit_of_numeration"
                 value={formData.unit_of_numeration}
-                onChange={(e) =>
-                  setFormData({ ...formData, unit_of_numeration: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
                 placeholder="Unit (e.g. $, €, etc.)"
               />
             </div>
@@ -371,9 +348,7 @@ const ListingManager = observer(() => {
               <Input
                 id="status"
                 value={formData.status}
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 placeholder="Status (e.g. pending, approved, blocked)"
               />
             </div>
@@ -383,46 +358,49 @@ const ListingManager = observer(() => {
               <Switch
                 id="featured"
                 checked={formData.featured}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, featured: checked })
-                }
+                onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
               />
             </div>
-            {/* Category ID */}
+            {/* Category - выпадающий список */}
             <div className="space-y-2">
-              <Label htmlFor="categoryId">Category ID</Label>
-              <Input
+              <Label htmlFor="categoryId">Category</Label>
+              <select
                 id="categoryId"
                 value={formData.categoryId}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value })
-                }
-                placeholder="Category ID"
-              />
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                className="border rounded p-2 w-full"
+              >
+                <option value="">Select Category</option>
+                {rentTimeStore.categories.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            {/* Rent Time ID */}
+            {/* Rent Time - выпадающий список */}
             <div className="space-y-2">
-              <Label htmlFor="rentTimeId">Rent Time ID</Label>
-              <Input
+              <Label htmlFor="rentTimeId">Rent Time</Label>
+              <select
                 id="rentTimeId"
                 value={formData.rentTimeId}
-                onChange={(e) =>
-                  setFormData({ ...formData, rentTimeId: e.target.value })
-                }
-                placeholder="Rent Time ID"
-              />
+                onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
+                className="border rounded p-2 w-full"
+              >
+                <option value="">Select Rent Time</option>
+                {rentTimeStore.rentTimes.map((rt: any) => (
+                  <option key={rt.id} value={rt.id}>
+                    {rt.name}
+                  </option>
+                ))}
+              </select>
             </div>
             {/* Images Upload */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>
-              {/* При добавлении показываем file input, а при редактировании — просто выводим миниатюры */}
+              {/* При добавлении – file input, при редактировании – показываем миниатюры */}
               {!editingListing ? (
-                <Input
-                  id="images"
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                />
+                <Input id="images" type="file" multiple onChange={handleFileChange} />
               ) : (
                 renderExistingImages(editingListing)
               )}

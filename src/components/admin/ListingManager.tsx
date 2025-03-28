@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { PenSquare, Trash2, Plus, X, Star } from 'lucide-react';
-import { Context } from '../main';
+import { Context } from '../../main';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
 

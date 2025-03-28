@@ -244,7 +244,7 @@ const Admin = observer(() => {
               <ListIcon className="mr-2 h-4 w-4" />
               <span>Listing Management</span>
             </TabsTrigger>
-            {userStore.user.role === 'admin' && (
+            {userStore.user?.role === 'admin' && (
               <TabsTrigger value="categories" className="flex items-center">
                 <Tag className="mr-2 h-4 w-4" />
                 <span>Categories</span>

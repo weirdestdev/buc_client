@@ -337,7 +337,7 @@ const Admin = observer(() => {
             {/* Таблица пользователей */}
             <UserTable
               users={userWorkStore.users}
-              currentUserRole={userStore.user.role}
+              currentUserRole={userStore.user?.role}
               onApprove={(user) => handleUserAction(user, 'approve')}
               onBlock={(user) => handleUserAction(user, 'block')}
               onUnblock={(user) => handleUserAction(user, 'unblock')}
@@ -367,7 +367,7 @@ const Admin = observer(() => {
             <ListingManager />
           </TabsContent>
           <TabsContent value="categories">
-            {userStore.user.role === 'admin' && <CategoriesTable />}
+            {userStore.user?.role === 'admin' && <CategoriesTable />}
           </TabsContent>
         </Tabs>
       </main>

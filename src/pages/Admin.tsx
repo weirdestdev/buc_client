@@ -26,6 +26,7 @@ import ListingManager from '@/components/admin/ListingManager';
 import { approveUser, blockUser, unblockUser } from '@/http/userWorkAPI';
 import CategoriesTable from '@/components/CategoriesTable';
 import RentTimeTable from '@/components/RentTimeTable';
+import { Calendar } from 'lucide-react';
 
 const Admin = observer(() => {
   const navigate = useNavigate();
@@ -253,7 +254,7 @@ const Admin = observer(() => {
             )}
             {userStore.user?.role === 'admin' && (
               <TabsTrigger value="renttime" className="flex items-center">
-                <Tag className="mr-2 h-4 w-4" />
+                <Calendar className="mr-2 h-4 w-4" />
                 <span>Rent Time</span>
               </TabsTrigger>
             )}

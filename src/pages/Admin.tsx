@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ListingManager from '@/components/admin/ListingManager';
 import { approveUser, blockUser, unblockUser } from '@/http/userWorkAPI';
 import CategoriesTable from '@/components/CategoriesTable';
+import RentTimeTable from '@/components/RentTimeTable';
 
 const Admin = observer(() => {
   const navigate = useNavigate();
@@ -250,6 +251,12 @@ const Admin = observer(() => {
                 <span>Categories</span>
               </TabsTrigger>
             )}
+            {userStore.user?.role === 'admin' && (
+              <TabsTrigger value="renttime" className="flex items-center">
+                <Tag className="mr-2 h-4 w-4" />
+                <span>Rent Time</span>
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="users">
             {/* Статистика */}
@@ -368,6 +375,9 @@ const Admin = observer(() => {
           </TabsContent>
           <TabsContent value="categories">
             {userStore.user?.role === 'admin' && <CategoriesTable />}
+          </TabsContent>
+          <TabsContent value="renttime">
+            {userStore.user?.role === 'admin' && <RentTimeTable />}
           </TabsContent>
         </Tabs>
       </main>

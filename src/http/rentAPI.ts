@@ -24,3 +24,43 @@ export const deleteRentTime = async (id: number) => {
   const { data } = await $authHost.delete(`api/rentals/renttime/${id}`);
   return data;
 };
+
+// Создание нового объявления (с загрузкой файлов)
+export const createRental = async (rentalData: FormData) => {
+  const { data } = await $authHost.post('api/rentals', rentalData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
+// Обновление объявления по ID (с загрузкой файлов)
+export const updateRental = async (id: number, rentalData: FormData) => {
+  const { data } = await $authHost.put(`api/rentals/${id}`, rentalData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
+// Удаление объявления по ID
+export const deleteRental = async (id: number) => {
+  const { data } = await $authHost.delete(`api/rentals/${id}`);
+  return data;
+};
+
+// Получение всех объявлений
+export const fetchRentals = async () => {
+  const { data } = await $authHost.get('api/rentals');
+  return data;
+};
+
+// Получение избранных объявлений
+export const fetchFeaturedRentals = async () => {
+  const { data } = await $authHost.get('api/rentals/featured');
+  return data;
+};
+
+// Получение объявлений по категории
+export const fetchRentalsByCategory = async (categoryId: number) => {
+  const { data } = await $authHost.get(`api/rentals/category/${categoryId}`);
+  return data;
+};

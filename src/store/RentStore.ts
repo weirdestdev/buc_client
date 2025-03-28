@@ -4,7 +4,13 @@ import {
   fetchRentTimes, 
   createRentTime, 
   updateRentTime, 
-  deleteRentTime 
+  deleteRentTime,
+  createRental,
+  updateRental,
+  deleteRental,
+  fetchRentals,
+  fetchFeaturedRentals,
+  fetchRentalsByCategory,
 } from "../http/rentAPI";
 
 export interface IRentTime {
@@ -12,8 +18,23 @@ export interface IRentTime {
   name: string;
 }
 
+export interface IRental {
+  id: number;
+  name: string;
+  description: string;
+  address: string;
+  price: number;
+  unit_of_numeration: string;
+  status: string;
+  featured: boolean;
+  categoryId: number;
+  rentTimeId: number;
+  images: string[];
+}
+
 class RentTimeStore {
   rentTimes: IRentTime[] = [];
+  rentals: IRental[] = [];
   isLoading = false;
 
   constructor() {
@@ -83,6 +104,112 @@ class RentTimeStore {
       });
     } catch (error) {
       console.error("Ошибка удаления времени аренды:", error);
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // Загрузка всех объявлений
+  async loadRentals() {
+    this.isLoading = true;
+    try {
+      const data = await fetchRentals();
+      runInAction(() => {
+        this.rentals = data;
+      });
+    } catch (error) {
+      console.error("Ошибка загрузки объявлений:", error);
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // Создание нового объявления
+  async addRental(rentalData: FormData) {
+    this.isLoading = true;
+    try {
+      const newRental = await createRental(rentalData);
+      runInAction(() => {
+        this.rentals.push(newRental);
+      });
+    } catch (error) {
+      console.error("Ошибка создания объявления:", error);
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // Обновление объявления по ID
+  async updateRental(id: number, rentalData: FormData) {
+    this.isLoading = true;
+    try {
+      const updatedRental = await updateRental(id, rentalData);
+      runInAction(() => {
+        this.rentals = this.rentals.map(rental =>
+          rental.id === id ? updatedRental : rental
+        );
+      });
+    } catch (error) {
+      console.error("Ошибка обновления объявления:", error);
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // Удаление объявления по ID
+  async removeRental(id: number) {
+    this.isLoading = true;
+    try {
+      await deleteRental(id);
+      runInAction(() => {
+        this.rentals = this.rentals.filter(rental => rental.id !== id);
+      });
+    } catch (error) {
+      console.error("Ошибка удаления объявления:", error);
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // Загрузка избранных объявлений
+  async loadFeaturedRentals() {
+    this.isLoading = true;
+    try {
+      const data = await fetchFeaturedRentals();
+      runInAction(() => {
+        // В зависимости от логики приложения можно обновить весь список или хранить отдельно
+        this.rentals = data;
+      });
+    } catch (error) {
+      console.error("Ошибка загрузки избранных объявлений:", error);
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // Загрузка объявлений по категории
+  async loadRentalsByCategory(categoryId: number) {
+    this.isLoading = true;
+    try {
+      const data = await fetchRentalsByCategory(categoryId);
+      runInAction(() => {
+        // Аналогично: можно сохранить отдельно или обновить общий список
+        this.rentals = data;
+      });
+    } catch (error) {
+      console.error("Ошибка загрузки объявлений по категории:", error);
     } finally {
       runInAction(() => {
         this.isLoading = false;

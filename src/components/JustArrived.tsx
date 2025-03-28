@@ -1,10 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { ArrowDownAZ, ArrowUpAZ, Building, Home, MapPin, EuroIcon, Bed, Bath, Lock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
+import { Context } from '@/main'; // убедитесь, что путь корректный
 
 interface JustArrivedProps {
   openAuthDialog?: (tab: "login" | "register") => void;
@@ -20,9 +20,10 @@ export default function JustArrived({
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
   const { isAuthenticated, getAllJustArrivedListings, getFeaturedJustArrivedListings } = useAuth();
-  
+  const { userStore } = useContext(Context)!;
+
   useEffect(() => {
-    // Get properties based on authentication status
+    // Получаем список объектов в зависимости от статуса авторизации
     const properties = isAuthenticated 
       ? getAllJustArrivedListings() 
       : getFeaturedJustArrivedListings();
@@ -76,7 +77,8 @@ export default function JustArrived({
           className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
           onLoad={() => handleImageLoad(property.id)} 
         />
-        {!isAuthenticated && (
+        {/* Отображаем плашку "Members Only" если статус пользователя не "approved" */}
+        {userStore.user?.status !== 'approved' && (
           <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
             <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
               <Lock className="w-4 h-4 text-primary mr-2" />

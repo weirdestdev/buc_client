@@ -1,10 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { ArrowDownAZ, ArrowUpAZ, Car, Ship, EuroIcon, Bold, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
+import { Context } from '@/main'; // проверьте путь импорта контекста
 
 interface LeisureProps {
   openAuthDialog?: (tab: "login" | "register") => void;
@@ -19,10 +19,12 @@ export default function Leisure({
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  
   const { isAuthenticated, getAllLeisureListings, getFeaturedLeisureListings } = useAuth();
+  const { userStore } = useContext(Context)!;
   
   useEffect(() => {
-    // Get items based on authentication status
+    // Получаем элементы в зависимости от статуса авторизации
     const items = isAuthenticated 
       ? getAllLeisureListings() 
       : getFeaturedLeisureListings();
@@ -71,7 +73,8 @@ export default function Leisure({
           className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[item.id] ? 'loaded' : ''}`} 
           onLoad={() => handleImageLoad(item.id)} 
         />
-        {!isAuthenticated && (
+        {/* Отображаем плашку, если статус пользователя не "approved" */}
+        {userStore.user?.status !== 'approved' && (
           <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
             <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
               <Lock className="w-4 h-4 text-primary mr-2" />

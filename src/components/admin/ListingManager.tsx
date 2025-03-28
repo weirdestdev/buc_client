@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { PenSquare, Trash2, Plus, X, Star } from 'lucide-react';
-import { Context } from '../main';
+import { Context } from '../../main';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
 
@@ -40,8 +40,8 @@ interface IListFormData {
 
 type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
-const ListingManagement = observer(() => {
-  const { rentalStore } = useContext(Context)!;
+const ListingManager = observer(() => {
+  const { rentTimeStore } = useContext(Context)!;
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
@@ -60,11 +60,11 @@ const ListingManagement = observer(() => {
   const [files, setFiles] = useState<FileList | null>(null);
 
   useEffect(() => {
-    rentalStore.loadRentals();
-  }, [rentalStore]);
+    rentTimeStore.loadRentals();
+  }, [rentTimeStore]);
 
   // Фильтрация объявлений по вкладкам, основываясь на названии категории (из включенной модели Categories)
-  const filteredListings = rentalStore.rentals.filter((listing: any) => {
+  const filteredListings = rentTimeStore.rentals.filter((listing: any) => {
     const catName = listing.Category?.name?.toLowerCase() || '';
     if (activeTab === 'Our Portfolio') {
       return ['villa', 'apartment', 'plot', 'building'].includes(catName);
@@ -81,8 +81,8 @@ const ListingManagement = observer(() => {
     const form = new FormData();
     form.append('featured', JSON.stringify(!listing.featured));
     // Вызов обновления с минимальными данными – остальные поля останутся прежними
-    await rentalStore.updateRental(listing.id, form);
-    await rentalStore.loadRentals();
+    await rentTimeStore.updateRental(listing.id, form);
+    await rentTimeStore.loadRentals();
   };
 
   const openAddDialog = () => {
@@ -151,18 +151,18 @@ const ListingManagement = observer(() => {
     }
 
     if (editingListing) {
-      await rentalStore.updateRental(editingListing.id, form);
+      await rentTimeStore.updateRental(editingListing.id, form);
     } else {
-      await rentalStore.addRental(form);
+      await rentTimeStore.addRental(form);
     }
-    await rentalStore.loadRentals();
+    await rentTimeStore.loadRentals();
     setIsDialogOpen(false);
   };
 
   const handleDeleteListing = async (id: number) => {
     if (window.confirm("Вы действительно хотите удалить это объявление?")) {
-      await rentalStore.removeRental(id);
-      await rentalStore.loadRentals();
+      await rentTimeStore.removeRental(id);
+      await rentTimeStore.loadRentals();
     }
   };
 
@@ -443,4 +443,4 @@ const ListingManagement = observer(() => {
   );
 });
 
-export default ListingManagement;
+export default ListingManager;

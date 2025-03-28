@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { PenSquare, Trash2, Plus, X, Star } from 'lucide-react';
+import { PenSquare, Trash2, Plus, Star } from 'lucide-react';
 import { Context } from '../../main';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
@@ -40,8 +40,8 @@ interface IListFormData {
 type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
 const ListingManager = observer(() => {
-  // Используем rentTimeStore (в котором, помимо времени аренды, должны быть данные категорий и объявлений)
-  const { rentTimeStore } = useContext(Context)!;
+  // Получаем нужные сторы из контекста: для объявлений/времени аренды и для категорий
+  const { rentTimeStore, categoriesStore } = useContext(Context)!;
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
@@ -61,9 +61,9 @@ const ListingManager = observer(() => {
 
   useEffect(() => {
     rentTimeStore.loadRentals();
-    rentTimeStore.loadCategories();
+    categoriesStore.loadCategories();
     rentTimeStore.loadRentTimes();
-  }, [rentTimeStore]);
+  }, [rentTimeStore, categoriesStore]);
 
   // Фильтрация объявлений по вкладкам по названию категории (приводим к нижнему регистру)
   const filteredListings = rentTimeStore.rentals.filter((listing: any) => {
@@ -371,7 +371,7 @@ const ListingManager = observer(() => {
                 className="border rounded p-2 w-full"
               >
                 <option value="">Select Category</option>
-                {rentTimeStore.categories.map((cat: any) => (
+                {categoriesStore.categories.map((cat: any) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>

@@ -40,7 +40,6 @@ interface IListFormData {
 type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
 const ListingManager = observer(() => {
-  // Получаем нужные сторы из контекста: для объявлений/времени аренды и для категорий
   const { rentTimeStore, categoriesStore } = useContext(Context)!;
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,8 +55,9 @@ const ListingManager = observer(() => {
     categoryId: '',
     rentTimeId: '',
   });
-  // Для загрузки файлов (множественный выбор)
-  const [files, setFiles] = useState<FileList | null>(null);
+  
+  // Состояние для динамических полей загрузки файлов
+  const [fileFields, setFileFields] = useState<Array<File | null>>([]);
 
   useEffect(() => {
     rentTimeStore.loadRentals();
@@ -65,20 +65,19 @@ const ListingManager = observer(() => {
     rentTimeStore.loadRentTimes();
   }, [rentTimeStore, categoriesStore]);
 
-  // Фильтрация объявлений по вкладкам по названию категории (приводим к нижнему регистру)
+  // Фильтрация объявлений по вкладкам (для Leisure учитываем категорию "cars")
   const filteredListings = rentTimeStore.rentals.filter((listing: any) => {
     const catName = listing.category?.name?.toLowerCase() || '';
     if (activeTab === 'Our Portfolio') {
       return ['villa', 'apartment', 'plot', 'building'].includes(catName);
     }
     if (activeTab === 'Leisure') {
-      return ['car', 'yacht'].includes(catName);
+      return ['cars', 'yacht'].includes(catName);
     }
     // Для вкладки Rentals – все остальные
-    return !(['villa', 'apartment', 'plot', 'building', 'car', 'yacht'].includes(catName));
+    return !(['villa', 'apartment', 'plot', 'building', 'cars', 'yacht'].includes(catName));
   });
 
-  // Переключение featured через обновление объявления (отправляем FormData с единственным полем)
   const toggleFeatured = async (listing: any) => {
     const form = new FormData();
     form.append('featured', JSON.stringify(!listing.featured));
@@ -99,7 +98,7 @@ const ListingManager = observer(() => {
       categoryId: '',
       rentTimeId: '',
     });
-    setFiles(null);
+    setFileFields([]); // очищаем поля загрузки
     setIsDialogOpen(true);
   };
 
@@ -116,14 +115,21 @@ const ListingManager = observer(() => {
       categoryId: listing.categoryId?.toString() || '',
       rentTimeId: listing.rentTimeId?.toString() || '',
     });
-    setFiles(null);
+    setFileFields([]); // при редактировании изначально пустые новые поля
     setIsDialogOpen(true);
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFiles(e.target.files);
-    }
+  // Добавление нового поля для загрузки файла
+  const addFileField = () => {
+    setFileFields([...fileFields, null]);
+  };
+
+  // Обработчик изменения для конкретного поля файла
+  const handleFileFieldChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    const newFileFields = [...fileFields];
+    newFileFields[index] = file;
+    setFileFields(newFileFields);
   };
 
   const handleSaveListing = async () => {
@@ -143,12 +149,12 @@ const ListingManager = observer(() => {
     form.append('categoryId', formData.categoryId);
     form.append('rentTimeId', formData.rentTimeId);
 
-    // Если объявление новое – добавляем файлы; при редактировании файлы не меняются
-    if (!editingListing && files) {
-      Array.from(files).forEach((file) => {
+    // Перебираем все динамические поля и, если выбран файл, добавляем его в форму
+    fileFields.forEach((file) => {
+      if (file) {
         form.append('images', file);
-      });
-    }
+      }
+    });
 
     if (editingListing) {
       await rentTimeStore.updateRental(editingListing.id, form);
@@ -157,6 +163,7 @@ const ListingManager = observer(() => {
     }
     await rentTimeStore.loadRentals();
     setIsDialogOpen(false);
+    setFileFields([]);
   };
 
   const handleDeleteListing = async (id: number) => {
@@ -166,7 +173,6 @@ const ListingManager = observer(() => {
     }
   };
 
-  // Отображаем категорию: выводим иконку (если есть) и название
   const renderCategory = (listing: any) => {
     const category = listing.category;
     if (!category) return '-';
@@ -184,12 +190,10 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Отображаем время аренды – только название
   const renderRentTime = (listing: any) => {
     return listing.rent_time?.name || '-';
   };
 
-  // При редактировании, если есть изображения, отображаем до 15 миниатюр
   const renderExistingImages = (listing: any) => {
     if (!listing || !listing.rentals_images || listing.rentals_images.length === 0) return null;
     const images = listing.rentals_images.slice(0, 15);
@@ -361,7 +365,7 @@ const ListingManager = observer(() => {
                 onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
               />
             </div>
-            {/* Category - выпадающий список */}
+            {/* Category */}
             <div className="space-y-2">
               <Label htmlFor="categoryId">Category</Label>
               <select
@@ -378,7 +382,7 @@ const ListingManager = observer(() => {
                 ))}
               </select>
             </div>
-            {/* Rent Time - выпадающий список */}
+            {/* Rent Time */}
             <div className="space-y-2">
               <Label htmlFor="rentTimeId">Rent Time</Label>
               <select
@@ -398,12 +402,27 @@ const ListingManager = observer(() => {
             {/* Images Upload */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>
-              {/* При добавлении – file input, при редактировании – показываем миниатюры */}
-              {!editingListing ? (
-                <Input id="images" type="file" multiple onChange={handleFileChange} />
-              ) : (
-                renderExistingImages(editingListing)
-              )}
+              {/* Если редактирование – показываем существующие изображения */}
+              {editingListing && renderExistingImages(editingListing)}
+              {/* Динамические поля для загрузки файлов */}
+              {fileFields.map((file, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    onChange={(e) => handleFileFieldChange(e, index)}
+                  />
+                  {file && (
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`preview-${index}`}
+                      className="h-12 w-12 object-cover rounded"
+                    />
+                  )}
+                </div>
+              ))}
+              <Button onClick={addFileField} variant="outline">
+                Add Image Field
+              </Button>
             </div>
           </div>
 

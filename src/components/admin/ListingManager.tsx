@@ -21,10 +21,11 @@ import {
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { PenSquare, Trash2, Plus, X, Star } from 'lucide-react';
-import { Context } from '../../main';
+import { Context } from '../main';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
 
+// Определим тип для формы списка (объявления)
 interface IListFormData {
   name: string;
   description: string;
@@ -37,8 +38,11 @@ interface IListFormData {
   rentTimeId: string;
 }
 
-const ListingManager = observer(() => {
-  const { rentTimeStore } = useContext(Context)!;
+type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
+
+const ListingManagement = observer(() => {
+  const { rentalStore } = useContext(Context)!;
+  const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
   const [formData, setFormData] = useState<IListFormData>({
@@ -56,8 +60,30 @@ const ListingManager = observer(() => {
   const [files, setFiles] = useState<FileList | null>(null);
 
   useEffect(() => {
-    rentTimeStore.loadRentals();
-  }, [rentTimeStore]);
+    rentalStore.loadRentals();
+  }, [rentalStore]);
+
+  // Фильтрация объявлений по вкладкам, основываясь на названии категории (из включенной модели Categories)
+  const filteredListings = rentalStore.rentals.filter((listing: any) => {
+    const catName = listing.Category?.name?.toLowerCase() || '';
+    if (activeTab === 'Our Portfolio') {
+      return ['villa', 'apartment', 'plot', 'building'].includes(catName);
+    }
+    if (activeTab === 'Leisure') {
+      return ['car', 'yacht'].includes(catName);
+    }
+    // Для вкладки Rentals – все остальные
+    return !(['villa', 'apartment', 'plot', 'building', 'car', 'yacht'].includes(catName));
+  });
+
+  // Функция для переключения featured через обновление объявления (отправляем минимальный payload)
+  const toggleFeatured = async (listing: any) => {
+    const form = new FormData();
+    form.append('featured', JSON.stringify(!listing.featured));
+    // Вызов обновления с минимальными данными – остальные поля останутся прежними
+    await rentalStore.updateRental(listing.id, form);
+    await rentalStore.loadRentals();
+  };
 
   const openAddDialog = () => {
     setEditingListing(null);
@@ -116,39 +142,87 @@ const ListingManager = observer(() => {
     form.append('categoryId', formData.categoryId);
     form.append('rentTimeId', formData.rentTimeId);
 
-    // Добавляем файлы, если они выбраны (ключ - images)
-    if (files) {
+    // Для добавления объявлений – файлы можно выбрать.
+    // При редактировании, как сказано, поле файлов не изменяется, а отображаются уже загруженные изображения.
+    if (!editingListing && files) {
       Array.from(files).forEach((file) => {
         form.append('images', file);
       });
     }
 
     if (editingListing) {
-      await rentTimeStore.updateRental(editingListing.id, form);
+      await rentalStore.updateRental(editingListing.id, form);
     } else {
-      await rentTimeStore.addRental(form);
+      await rentalStore.addRental(form);
     }
-    await rentTimeStore.loadRentals();
+    await rentalStore.loadRentals();
     setIsDialogOpen(false);
   };
 
   const handleDeleteListing = async (id: number) => {
     if (window.confirm("Вы действительно хотите удалить это объявление?")) {
-      await rentTimeStore.removeRental(id);
-      await rentTimeStore.loadRentals();
+      await rentalStore.removeRental(id);
+      await rentalStore.loadRentals();
     }
   };
 
-  // Формирование полного пути к изображению (берем первый, если есть)
-  const getImagePath = (images: string[]) => {
-    if (!images || images.length === 0) return "";
-    const img = images[0];
-    if (img.startsWith('http')) return img;
-    return `${SERVER_URL}${img}`;
+  // Для категории выводим иконку и название
+  const renderCategory = (listing: any) => {
+    const category = listing.Category;
+    if (!category) return '-';
+    const icon = category.icon;
+    return (
+      <div className="flex items-center space-x-2">
+        {icon && (
+          <img
+            src={icon.startsWith('http') ? icon : `${SERVER_URL}${icon}`}
+            alt={category.name}
+            className="h-6 w-6 object-cover"
+          />
+        )}
+        <span>{category.name}</span>
+      </div>
+    );
+  };
+
+  // Для renttime выводим только название
+  const renderRentTime = (listing: any) => {
+    return listing.RentTime?.name || '-';
+  };
+
+  // При редактировании, если у объявления есть изображения, отобразим их (максимум 15)
+  const renderExistingImages = (listing: any) => {
+    if (!listing || !listing.images || listing.images.length === 0) return null;
+    const images = listing.images.slice(0, 15);
+    return (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {images.map((img: string, index: number) => (
+          <img
+            key={index}
+            src={img.startsWith('http') ? img : `${SERVER_URL}${img}`}
+            alt={`listing-${index}`}
+            className="h-12 w-12 object-cover rounded"
+          />
+        ))}
+      </div>
+    );
   };
 
   return (
     <div className="space-y-6">
+      {/* Вкладки */}
+      <div className="flex space-x-4">
+        {(['Our Portfolio', 'Leisure', 'Rentals'] as ActiveTab[]).map((tab) => (
+          <Button
+            key={tab}
+            variant={activeTab === tab ? "default" : "outline"}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </Button>
+        ))}
+      </div>
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Listing Management</h2>
         <Button onClick={openAddDialog}>
@@ -166,36 +240,25 @@ const ListingManager = observer(() => {
               <TableHead>Featured</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Rent Time</TableHead>
-              <TableHead>Image</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rentTimeStore.rentals.map((listing: any) => (
+            {filteredListings.map((listing: any) => (
               <TableRow key={listing.id}>
                 <TableCell>{listing.id}</TableCell>
                 <TableCell className="font-medium">{listing.name}</TableCell>
                 <TableCell>{listing.price}</TableCell>
                 <TableCell>
-                  {listing.featured ? (
-                    <Star className="h-4 w-4 text-yellow-500" />
-                  ) : (
-                    '-'
-                  )}
-                </TableCell>
-                <TableCell>{listing.categoryId}</TableCell>
-                <TableCell>{listing.rentTimeId}</TableCell>
-                <TableCell>
-                  {listing.images && listing.images.length > 0 ? (
-                    <img
-                      src={getImagePath(listing.images)}
-                      alt={listing.name}
-                      className="h-6 w-6 object-cover"
+                  <Button variant="ghost" onClick={() => toggleFeatured(listing)}>
+                    <Star
+                      className="h-4 w-4"
+                      color={listing.featured ? "gold" : "gray"}
                     />
-                  ) : (
-                    "-"
-                  )}
+                  </Button>
                 </TableCell>
+                <TableCell>{renderCategory(listing)}</TableCell>
+                <TableCell>{renderRentTime(listing)}</TableCell>
                 <TableCell className="flex items-center space-x-2">
                   <Button
                     variant="outline"
@@ -214,9 +277,9 @@ const ListingManager = observer(() => {
                 </TableCell>
               </TableRow>
             ))}
-            {rentTimeStore.rentals.length === 0 && (
+            {filteredListings.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   No listings. Add a new listing.
                 </TableCell>
               </TableRow>
@@ -352,12 +415,17 @@ const ListingManager = observer(() => {
             {/* Images Upload */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>
-              <Input
-                id="images"
-                type="file"
-                multiple
-                onChange={handleFileChange}
-              />
+              {/* При добавлении показываем file input, а при редактировании — просто выводим миниатюры */}
+              {!editingListing ? (
+                <Input
+                  id="images"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                />
+              ) : (
+                renderExistingImages(editingListing)
+              )}
             </div>
           </div>
 
@@ -375,4 +443,4 @@ const ListingManager = observer(() => {
   );
 });
 
-export default ListingManager;
+export default ListingManagement;

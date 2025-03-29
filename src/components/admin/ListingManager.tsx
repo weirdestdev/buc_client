@@ -119,9 +119,9 @@ const ListingManager = observer(() => {
       categoryId: listing.categoryId?.toString() || '',
       rentTimeId: listing.rentTimeId?.toString() || '',
     });
-    // При редактировании, если у объявления есть customData, преобразуем его в объект
-    setCustomFieldsValues(listing.customData 
-      ? listing.customData.reduce((acc: Record<string, string>, curr: any) => {
+    // Используем свойство rental_custom_data, возвращаемое сервером
+    setCustomFieldsValues(listing.rental_custom_data
+      ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
           acc[curr.categoriesDataId] = curr.value;
           return acc;
         }, {})

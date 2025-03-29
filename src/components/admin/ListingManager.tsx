@@ -59,7 +59,6 @@ const ListingManager = observer(() => {
   // Состояние для динамических полей загрузки файлов
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
   // Состояние для значений кастомных полей выбранной категории.
-  // Ключ – id кастомного поля, значение – введённое значение.
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -68,17 +67,10 @@ const ListingManager = observer(() => {
     rentTimeStore.loadRentTimes();
   }, [rentTimeStore, categoriesStore]);
 
-  // Фильтрация объявлений по вкладкам (для Leisure учитываем категорию "cars")
+  // Фильтрация объявлений по вкладкам по значению status
   const filteredListings = rentTimeStore.rentals.filter((listing: any) => {
-    const catName = listing.category?.name?.toLowerCase() || '';
-    if (activeTab === 'Our Portfolio') {
-      return ['villa', 'apartment', 'plot', 'building'].includes(catName);
-    }
-    if (activeTab === 'Leisure') {
-      return ['cars', 'yacht'].includes(catName);
-    }
-    // Для вкладки Rentals – все остальные
-    return !(['villa', 'apartment', 'plot', 'building', 'cars', 'yacht'].includes(catName));
+    const status = listing.status?.toLowerCase() || '';
+    return status === activeTab.toLowerCase();
   });
 
   const toggleFeatured = async (listing: any) => {
@@ -119,7 +111,6 @@ const ListingManager = observer(() => {
       categoryId: listing.categoryId?.toString() || '',
       rentTimeId: listing.rentTimeId?.toString() || '',
     });
-    // Используем свойство rental_custom_data, возвращаемое сервером
     setCustomFieldsValues(listing.rental_custom_data
       ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
           acc[curr.categoriesDataId] = curr.value;
@@ -131,12 +122,10 @@ const ListingManager = observer(() => {
     setIsDialogOpen(true);
   };
 
-  // Добавление нового поля для загрузки файла
   const addFileField = () => {
     setFileFields([...fileFields, null]);
   };
 
-  // Обработчик изменения для конкретного поля файла
   const handleFileFieldChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files ? e.target.files[0] : null;
     const newFileFields = [...fileFields];
@@ -144,16 +133,13 @@ const ListingManager = observer(() => {
     setFileFields(newFileFields);
   };
 
-  // Обработчик изменения категории – обновляем formData и подгружаем кастомные поля выбранной категории
   const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const selectedCategoryId = e.target.value;
     setFormData({ ...formData, categoryId: selectedCategoryId });
-    // Находим выбранную категорию
     const selectedCategory = categoriesStore.categories.find(
       (cat: any) => cat.id.toString() === selectedCategoryId
     );
     if (selectedCategory && selectedCategory.customFields) {
-      // Инициализируем объект кастомных полей со значениями по умолчанию (пустые строки)
       const initialValues: Record<string, string> = {};
       selectedCategory.customFields.forEach((field: any) => {
         initialValues[field.id] = '';
@@ -164,7 +150,6 @@ const ListingManager = observer(() => {
     }
   };
 
-  // Обработчик изменения конкретного кастомного поля
   const handleCustomFieldChange = (fieldId: string, value: string) => {
     setCustomFieldsValues({ ...customFieldsValues, [fieldId]: value });
   };
@@ -186,14 +171,12 @@ const ListingManager = observer(() => {
     form.append('categoryId', formData.categoryId);
     form.append('rentTimeId', formData.rentTimeId);
 
-    // Формируем массив кастомных данных из состояния customFieldsValues
     const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
       categoriesDataId: fieldId,
       value,
     }));
     form.append('customData', JSON.stringify(customDataArray));
 
-    // Добавляем файлы из динамических полей
     fileFields.forEach((file) => {
       if (file) {
         form.append('images', file);
@@ -258,7 +241,6 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Рендер кастомных полей для выбранной категории
   const renderCustomFields = () => {
     if (!formData.categoryId) return null;
     const selectedCategory = categoriesStore.categories.find(
@@ -269,7 +251,6 @@ const ListingManager = observer(() => {
       <div className="space-y-2">
         <Label>Custom Fields</Label>
         {selectedCategory.customFields.map((field: any) => {
-          // Определяем тип инпута в зависимости от типа поля
           let inputType = 'text';
           if (field.type === 'int' || field.type === 'double') {
             inputType = 'number';
@@ -428,12 +409,17 @@ const ListingManager = observer(() => {
             {/* Status */}
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Input
+              <select
                 id="status"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                placeholder="Status (e.g. pending, approved, blocked)"
-              />
+                className="border rounded p-2 w-full"
+              >
+                <option value="">Select Status</option>
+                <option value="our portfolio">Our Portfolio</option>
+                <option value="leisure">Leisure</option>
+                <option value="rentals">Rentals</option>
+              </select>
             </div>
             {/* Featured */}
             <div className="flex items-center space-x-2">
@@ -483,9 +469,7 @@ const ListingManager = observer(() => {
             {/* Images Upload */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>
-              {/* Если редактирование – показываем существующие изображения */}
               {editingListing && renderExistingImages(editingListing)}
-              {/* Динамические поля для загрузки файлов */}
               {fileFields.map((file, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input

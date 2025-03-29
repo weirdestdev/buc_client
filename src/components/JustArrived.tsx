@@ -15,15 +15,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
 import { Context } from '@/main';
 
-export default function OurPortfolio() {
+interface JustArrivedProps {
+  openAuthDialog?: (tab: "login" | "register") => void;
+}
+
+export default function OurPortfolio({ openAuthDialog }: JustArrivedProps) {
   const { rentTimeStore, categoriesStore, userStore } = useContext(Context)!;
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
-  
+
   useEffect(() => {
-    // Загружаем объявления, если их еще нет
+    // Если объявления ещё не загружены, загружаем их
     if (!rentTimeStore.rentals.length) {
       rentTimeStore.loadRentals();
     }
@@ -31,7 +35,7 @@ export default function OurPortfolio() {
 
   useEffect(() => {
     // Фильтруем объявления для Our Portfolio:
-    // Будем считать, что Our Portfolio – это объявления, у которых название категории (lowercase)
+    // Мы считаем, что Our Portfolio – это объявления, у которых название категории (в нижнем регистре)
     // входит в массив ["villa", "apartment", "plot", "building"]
     const portfolioCategories = ["villa", "apartment", "plot", "building"];
     const filtered = rentTimeStore.rentals.filter((listing: any) => {
@@ -46,7 +50,7 @@ export default function OurPortfolio() {
   }, [rentTimeStore.rentals, sortDirection]);
 
   const handleImageLoad = (id: number) => {
-    setLoadedImages((prev) => ({
+    setLoadedImages(prev => ({
       ...prev,
       [id]: true,
     }));
@@ -59,11 +63,15 @@ export default function OurPortfolio() {
   };
 
   const handlePropertyClick = (property: any) => {
-    setSelectedProperty(property);
+    // Если пользователь не авторизован и функция openAuthDialog передана, открываем окно авторизации
+    if (!userStore.user && openAuthDialog) {
+      openAuthDialog("login");
+    } else {
+      setSelectedProperty(property);
+    }
   };
 
-  // Вывод кастомных полей – пробегаем по rental_custom_data,
-  // для каждого поля ищем определение в category.customFields (если есть)
+  // Функция для вывода кастомных полей
   const renderCustomData = (property: any) => {
     if (!property.rental_custom_data || property.rental_custom_data.length === 0)
       return null;
@@ -71,9 +79,7 @@ export default function OurPortfolio() {
     return (
       <div className="mt-2">
         {property.rental_custom_data.map((item: any) => {
-          const field = customFields.find(
-            (f: any) => f.id === item.categoriesDataId
-          );
+          const field = customFields.find((f: any) => f.id === item.categoriesDataId);
           return (
             <div key={item.categoriesDataId} className="text-xs text-muted-foreground">
               <span className="font-medium">

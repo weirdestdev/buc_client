@@ -59,7 +59,7 @@ const ListingManager = observer(() => {
   // Состояние для динамических полей загрузки файлов
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
   // Состояние для значений кастомных полей выбранной категории.
-  // Ключ – id кастомного поля, значение – строка, введённое пользователем.
+  // Ключ – id кастомного поля, значение – введённое значение.
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -119,8 +119,7 @@ const ListingManager = observer(() => {
       categoryId: listing.categoryId?.toString() || '',
       rentTimeId: listing.rentTimeId?.toString() || '',
     });
-    // При редактировании можно попытаться загрузить кастомные данные, если они есть в listing.customData.
-    // Если их нет, оставляем пустым.
+    // При редактировании, если у объявления есть customData, преобразуем его в объект
     setCustomFieldsValues(listing.customData 
       ? listing.customData.reduce((acc: Record<string, string>, curr: any) => {
           acc[curr.categoriesDataId] = curr.value;
@@ -188,14 +187,13 @@ const ListingManager = observer(() => {
     form.append('rentTimeId', formData.rentTimeId);
 
     // Формируем массив кастомных данных из состояния customFieldsValues
-    // Каждый элемент – объект с полями: categoriesDataId и value
     const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
       categoriesDataId: fieldId,
       value,
     }));
     form.append('customData', JSON.stringify(customDataArray));
 
-    // Перебираем все динамические поля для файлов и добавляем их в форму
+    // Добавляем файлы из динамических полей
     fileFields.forEach((file) => {
       if (file) {
         form.append('images', file);

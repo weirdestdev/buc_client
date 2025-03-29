@@ -29,7 +29,11 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
   const { isAuthenticated, getAllJustArrivedListings, getFeaturedJustArrivedListings } = useAuth();
-  const { userStore, categoriesStore } = useContext(Context)!;
+  const { userStore, rentTimeStore } = useContext(Context)!;
+
+  useEffect(() => {
+  console.log("Received rentals JSON:", rentTimeStore.rentals);
+}, [rentTimeStore.rentals]);
 
   // Здесь предполагается, что getAllJustArrivedListings возвращает только объявления, относящиеся к Our Portfolio.
   // Если нет, можно фильтровать по типу внутри useEffect.

@@ -2,12 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import {
   ArrowDownAZ,
   ArrowUpAZ,
-  Building,
-  Home,
   MapPin,
   EuroIcon,
-  Bed,
-  Bath,
   Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,34 +11,29 @@ import { Card, CardContent } from '@/components/ui/card';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
 import { Context } from '@/main';
 
-interface JustArrivedProps {
+interface OurPortfolioProps {
   openAuthDialog?: (tab: "login" | "register") => void;
 }
 
-export default function OurPortfolio({ openAuthDialog }: JustArrivedProps) {
-  const { rentTimeStore, categoriesStore, userStore } = useContext(Context)!;
+export default function OurPortfolio({ openAuthDialog }: OurPortfolioProps) {
+  const { rentTimeStore, userStore } = useContext(Context)!;
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
 
   useEffect(() => {
-    // Если объявления ещё не загружены, загружаем их
     if (!rentTimeStore.rentals.length) {
       rentTimeStore.loadRentals();
     }
   }, [rentTimeStore]);
 
   useEffect(() => {
-    // Фильтруем объявления для Our Portfolio:
-    // Мы считаем, что Our Portfolio – это объявления, у которых название категории (в нижнем регистре)
-    // входит в массив ["villa", "apartment", "plot", "building"]
-    const portfolioCategories = ["villa", "apartment", "plot", "building"];
+    // Фильтруем объявления, где status === "our portfolio"
     const filtered = rentTimeStore.rentals.filter((listing: any) => {
-      const catName = listing.category?.name?.toLowerCase() || '';
-      return portfolioCategories.includes(catName);
+      return listing.status?.toLowerCase() === 'our portfolio';
     });
-    // Сортируем по цене
+    // Сортировка по цене
     filtered.sort((a: any, b: any) =>
       sortDirection === 'asc' ? a.price - b.price : b.price - a.price
     );
@@ -50,7 +41,7 @@ export default function OurPortfolio({ openAuthDialog }: JustArrivedProps) {
   }, [rentTimeStore.rentals, sortDirection]);
 
   const handleImageLoad = (id: number) => {
-    setLoadedImages(prev => ({
+    setLoadedImages((prev) => ({
       ...prev,
       [id]: true,
     }));
@@ -63,7 +54,6 @@ export default function OurPortfolio({ openAuthDialog }: JustArrivedProps) {
   };
 
   const handlePropertyClick = (property: any) => {
-    // Если пользователь не авторизован и функция openAuthDialog передана, открываем окно авторизации
     if (!userStore.user && openAuthDialog) {
       openAuthDialog("login");
     } else {
@@ -71,7 +61,6 @@ export default function OurPortfolio({ openAuthDialog }: JustArrivedProps) {
     }
   };
 
-  // Функция для вывода кастомных полей
   const renderCustomData = (property: any) => {
     if (!property.rental_custom_data || property.rental_custom_data.length === 0)
       return null;

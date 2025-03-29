@@ -58,6 +58,9 @@ const ListingManager = observer(() => {
   
   // Состояние для динамических полей загрузки файлов
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
+  // Состояние для значений кастомных полей выбранной категории.
+  // Ключ – id кастомного поля, значение – строка, введённое пользователем.
+  const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     rentTimeStore.loadRentals();
@@ -98,7 +101,8 @@ const ListingManager = observer(() => {
       categoryId: '',
       rentTimeId: '',
     });
-    setFileFields([]); // очищаем поля загрузки
+    setFileFields([]);
+    setCustomFieldsValues({});
     setIsDialogOpen(true);
   };
 
@@ -115,7 +119,16 @@ const ListingManager = observer(() => {
       categoryId: listing.categoryId?.toString() || '',
       rentTimeId: listing.rentTimeId?.toString() || '',
     });
-    setFileFields([]); // при редактировании изначально пустые новые поля
+    // При редактировании можно попытаться загрузить кастомные данные, если они есть в listing.customData.
+    // Если их нет, оставляем пустым.
+    setCustomFieldsValues(listing.customData 
+      ? listing.customData.reduce((acc: Record<string, string>, curr: any) => {
+          acc[curr.categoriesDataId] = curr.value;
+          return acc;
+        }, {})
+      : {}
+    );
+    setFileFields([]);
     setIsDialogOpen(true);
   };
 
@@ -130,6 +143,31 @@ const ListingManager = observer(() => {
     const newFileFields = [...fileFields];
     newFileFields[index] = file;
     setFileFields(newFileFields);
+  };
+
+  // Обработчик изменения категории – обновляем formData и подгружаем кастомные поля выбранной категории
+  const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const selectedCategoryId = e.target.value;
+    setFormData({ ...formData, categoryId: selectedCategoryId });
+    // Находим выбранную категорию
+    const selectedCategory = categoriesStore.categories.find(
+      (cat: any) => cat.id.toString() === selectedCategoryId
+    );
+    if (selectedCategory && selectedCategory.customFields) {
+      // Инициализируем объект кастомных полей со значениями по умолчанию (пустые строки)
+      const initialValues: Record<string, string> = {};
+      selectedCategory.customFields.forEach((field: any) => {
+        initialValues[field.id] = '';
+      });
+      setCustomFieldsValues(initialValues);
+    } else {
+      setCustomFieldsValues({});
+    }
+  };
+
+  // Обработчик изменения конкретного кастомного поля
+  const handleCustomFieldChange = (fieldId: string, value: string) => {
+    setCustomFieldsValues({ ...customFieldsValues, [fieldId]: value });
   };
 
   const handleSaveListing = async () => {
@@ -149,7 +187,15 @@ const ListingManager = observer(() => {
     form.append('categoryId', formData.categoryId);
     form.append('rentTimeId', formData.rentTimeId);
 
-    // Перебираем все динамические поля и, если выбран файл, добавляем его в форму
+    // Формируем массив кастомных данных из состояния customFieldsValues
+    // Каждый элемент – объект с полями: categoriesDataId и value
+    const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
+      categoriesDataId: fieldId,
+      value,
+    }));
+    form.append('customData', JSON.stringify(customDataArray));
+
+    // Перебираем все динамические поля для файлов и добавляем их в форму
     fileFields.forEach((file) => {
       if (file) {
         form.append('images', file);
@@ -208,6 +254,41 @@ const ListingManager = observer(() => {
               alt={`listing-${index}`}
               className="h-12 w-12 object-cover rounded"
             />
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Рендер кастомных полей для выбранной категории
+  const renderCustomFields = () => {
+    if (!formData.categoryId) return null;
+    const selectedCategory = categoriesStore.categories.find(
+      (cat: any) => cat.id.toString() === formData.categoryId
+    );
+    if (!selectedCategory || !selectedCategory.customFields) return null;
+    return (
+      <div className="space-y-2">
+        <Label>Custom Fields</Label>
+        {selectedCategory.customFields.map((field: any) => {
+          // Определяем тип инпута в зависимости от типа поля
+          let inputType = 'text';
+          if (field.type === 'int' || field.type === 'double') {
+            inputType = 'number';
+          } else if (field.type === 'date') {
+            inputType = 'date';
+          }
+          return (
+            <div key={field.id} className="space-y-1">
+              <Label htmlFor={`custom-${field.id}`}>{field.name}</Label>
+              <Input
+                id={`custom-${field.id}`}
+                type={inputType}
+                value={customFieldsValues[field.id] || ''}
+                onChange={(e) => handleCustomFieldChange(field.id.toString(), e.target.value)}
+                placeholder={`Enter ${field.name}`}
+              />
+            </div>
           );
         })}
       </div>
@@ -371,7 +452,7 @@ const ListingManager = observer(() => {
               <select
                 id="categoryId"
                 value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                onChange={handleCategoryChange}
                 className="border rounded p-2 w-full"
               >
                 <option value="">Select Category</option>
@@ -399,6 +480,8 @@ const ListingManager = observer(() => {
                 ))}
               </select>
             </div>
+            {/* Custom Fields */}
+            {renderCustomFields()}
             {/* Images Upload */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>

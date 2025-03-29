@@ -1,18 +1,27 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { ArrowDownAZ, ArrowUpAZ, Building, Home, MapPin, EuroIcon, Bed, Bath, Lock, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useContext, ChangeEvent } from 'react';
+import {
+  ArrowDownAZ,
+  ArrowUpAZ,
+  Building,
+  Home,
+  MapPin,
+  EuroIcon,
+  Bed,
+  Bath,
+  Lock,
+  ArrowRight,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
-import { Context } from '@/main'; // убедитесь, что путь корректный
+import { Context } from '@/main';
 
 interface JustArrivedProps {
   openAuthDialog?: (tab: "login" | "register") => void;
 }
 
-export default function JustArrived({
-  openAuthDialog
-}: JustArrivedProps) {
+export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const [propertyType, setPropertyType] = useState<string>("all");
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -20,8 +29,10 @@ export default function JustArrived({
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
   const { isAuthenticated, getAllJustArrivedListings, getFeaturedJustArrivedListings } = useAuth();
-  const { userStore } = useContext(Context)!;
+  const { userStore, categoriesStore } = useContext(Context)!;
 
+  // Здесь предполагается, что getAllJustArrivedListings возвращает только объявления, относящиеся к Our Portfolio.
+  // Если нет, можно фильтровать по типу внутри useEffect.
   useEffect(() => {
     // Получаем список объектов в зависимости от статуса авторизации
     const properties = isAuthenticated 
@@ -49,13 +60,13 @@ export default function JustArrived({
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({
       ...prev,
-      [id]: true
+      [id]: true,
     }));
   };
   
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-DE', {
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(price);
   };
   
@@ -64,6 +75,30 @@ export default function JustArrived({
     setPropertyDialogOpen(true);
   };
   
+  // Функция для вывода кастомных полей
+  const renderCustomData = (property: any) => {
+    if (!property.rental_custom_data || property.rental_custom_data.length === 0) return null;
+    // Предполагаем, что объект property.category.customFields содержит определения кастомных полей
+    const customFields = property.category?.customFields;
+    return (
+      <div className="mt-2">
+        {property.rental_custom_data.map((item: any) => {
+          const field = customFields
+            ? customFields.find((f: any) => f.id === item.categoriesDataId)
+            : null;
+          return (
+            <div key={item.categoriesDataId} className="text-xs text-muted-foreground">
+              <span className="font-medium">
+                {field ? field.name : `Field ${item.categoriesDataId}`}:
+              </span>{' '}
+              <span>{item.value}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderPropertyCard = (property: any) => (
     <Card 
       key={property.id} 
@@ -77,7 +112,6 @@ export default function JustArrived({
           className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
           onLoad={() => handleImageLoad(property.id)} 
         />
-        {/* Отображаем плашку "Members Only" если статус пользователя не "approved" */}
         {userStore.user?.status !== 'approved' && (
           <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
             <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
@@ -100,24 +134,9 @@ export default function JustArrived({
             <EuroIcon className="w-5 h-5 mr-1 flex-shrink-0" />
             {formatPrice(property.price)}
           </div>
-          {(property.bedrooms > 0 || property.bathrooms > 0) && (
-            <div className="text-sm text-muted-foreground flex items-center space-x-2">
-              {property.bedrooms > 0 && (
-                <div className="flex items-center">
-                  <Bed className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span>{property.bedrooms}</span>
-                </div>
-              )}
-              {property.bedrooms > 0 && property.bathrooms > 0 && <span>·</span>}
-              {property.bathrooms > 0 && (
-                <div className="flex items-center">
-                  <Bath className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span>{property.bathrooms}</span>
-                </div>
-              )}
-            </div>
-          )}
         </div>
+        {/* Вывод кастомных полей */}
+        {renderCustomData(property)}
       </CardContent>
     </Card>
   );
@@ -128,7 +147,7 @@ export default function JustArrived({
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-display font-semibold mb-4">Our Portfolio</h2>
           <p className="text-muted-foreground">
-            Explore our newest properties for sale that have just been added to our exclusive collection
+            Explore our newest properties for sale from our exclusive Our Portfolio collection.
           </p>
         </div>
         

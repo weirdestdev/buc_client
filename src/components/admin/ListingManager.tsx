@@ -25,21 +25,23 @@ import { Context } from '../../main';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
-// Интерфейс формы остался прежним, но будем использовать только необходимые поля
 interface IListFormData {
   name: string;
   description: string;
-  address: string; // будем отображать как Location
+  address: string;
   price: string;
-  unit_of_numeration: string; // используется как Price Period для Rentals и Leisure
+  unit_of_numeration: string;
+  status: string;
   featured: boolean;
+  categoryId: string;
+  rentTimeId: string;
 }
 
-type ActiveTab = 'Our Portfolio' | 'Rentals' | 'Leisure';
+type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
 const ListingManager = observer(() => {
   const { rentTimeStore, categoriesStore } = useContext(Context)!;
-  // Изменён порядок вкладок
+  // Изменён порядок вкладок: Our Portfolio - Rentals - Leisure
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
@@ -49,12 +51,15 @@ const ListingManager = observer(() => {
     address: '',
     price: '',
     unit_of_numeration: '',
+    status: '',
     featured: false,
+    categoryId: '',
+    rentTimeId: '',
   });
 
   // Состояние для динамических полей загрузки файлов
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
-  // Дополнительные данные для кастомных полей оставляем без изменений
+  // Состояние для значений кастомных полей выбранной категории.
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -78,15 +83,16 @@ const ListingManager = observer(() => {
 
   const openAddDialog = () => {
     setEditingListing(null);
-    // При открытии формы, кроме очистки полей, можно установить статус на основе активной вкладки,
-    // если это необходимо на сервере (например, listing.status = activeTab.toLowerCase())
     setFormData({
       name: '',
       description: '',
       address: '',
       price: '',
       unit_of_numeration: '',
+      status: '',
       featured: false,
+      categoryId: '',
+      rentTimeId: '',
     });
     setFileFields([]);
     setCustomFieldsValues({});
@@ -101,15 +107,18 @@ const ListingManager = observer(() => {
       address: listing.address || '',
       price: listing.price?.toString() || '',
       unit_of_numeration: listing.unit_of_numeration || '',
+      status: listing.status || '',
       featured: listing.featured || false,
+      categoryId: listing.categoryId?.toString() || '',
+      rentTimeId: listing.rentTimeId?.toString() || '',
     });
-    // Если у редактируемого объявления есть кастомные поля, оставляем их
-    setCustomFieldsValues(listing.rental_custom_data
-      ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
-        acc[curr.categoriesDataId] = curr.value;
-        return acc;
-      }, {} )
-      : {}
+    setCustomFieldsValues(
+      listing.rental_custom_data
+        ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
+            acc[curr.categoriesDataId] = curr.value;
+            return acc;
+          }, {})
+        : {}
     );
     setFileFields([]);
     setIsDialogOpen(true);
@@ -128,8 +137,12 @@ const ListingManager = observer(() => {
     }
   };
 
-  // При сохранении можно добавить автоустановку статуса в зависимости от активной вкладки,
-  // если сервер ожидает поле status
+  // Определяем выбранную категорию по select categoryId
+  const selectedCategory = categoriesStore.categories.find(
+    (cat: any) => cat.id.toString() === formData.categoryId
+  );
+
+  // При сохранении сохраняем все поля, вне зависимости от видимости
   const handleSaveListing = async () => {
     if (!formData.name || !formData.price) {
       alert("Введите обязательные поля: Title и Price");
@@ -139,15 +152,13 @@ const ListingManager = observer(() => {
     const form = new FormData();
     form.append('name', formData.name);
     form.append('description', formData.description);
-    form.append('address', formData.address); // Location
+    form.append('address', formData.address);
     form.append('price', formData.price);
-    // Добавляем поле Price Period только если категория Rentals или Leisure
-    if (activeTab === 'Rentals' || activeTab === 'Leisure') {
-      form.append('unit_of_numeration', formData.unit_of_numeration);
-    }
+    form.append('unit_of_numeration', formData.unit_of_numeration);
+    form.append('status', formData.status);
     form.append('featured', JSON.stringify(formData.featured));
-    // Устанавливаем статус в соответствии с активной вкладкой
-    form.append('status', activeTab.toLowerCase());
+    form.append('categoryId', formData.categoryId);
+    form.append('rentTimeId', formData.rentTimeId);
 
     const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
       categoriesDataId: fieldId,
@@ -178,7 +189,6 @@ const ListingManager = observer(() => {
     }
   };
 
-  // Для отображения категории и прочего оставляем как есть
   const renderCategory = (listing: any) => {
     const category = listing.category;
     if (!category) return '-';
@@ -220,9 +230,43 @@ const ListingManager = observer(() => {
     );
   };
 
+  // Функция отрисовки кастомных полей остаётся без изменений
+  const renderCustomFields = () => {
+    if (!formData.categoryId) return null;
+    const selectedCategory = categoriesStore.categories.find(
+      (cat: any) => cat.id.toString() === formData.categoryId
+    );
+    if (!selectedCategory || !selectedCategory.customFields) return null;
+    return (
+      <div className="space-y-2">
+        <Label>Custom Fields</Label>
+        {selectedCategory.customFields.map((field: any) => {
+          let inputType = 'text';
+          if (field.type === 'int' || field.type === 'double') {
+            inputType = 'number';
+          } else if (field.type === 'date') {
+            inputType = 'date';
+          }
+          return (
+            <div key={field.id} className="space-y-1">
+              <Label htmlFor={`custom-${field.id}`}>{field.name}</Label>
+              <Input
+                id={`custom-${field.id}`}
+                type={inputType}
+                value={customFieldsValues[field.id] || ''}
+                onChange={(e) => setCustomFieldsValues({ ...customFieldsValues, [field.id]: e.target.value })}
+                placeholder={`Enter ${field.name}`}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      {/* Вкладки в нужном порядке */}
+      {/* Вкладки для сортировки */}
       <div className="flex space-x-4">
         {(['Our Portfolio', 'Rentals', 'Leisure'] as ActiveTab[]).map((tab) => (
           <Button
@@ -247,10 +291,11 @@ const ListingManager = observer(() => {
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead>Title</TableHead>
+              <TableHead>Name</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Featured</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Rent Time</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -266,6 +311,7 @@ const ListingManager = observer(() => {
                   </Button>
                 </TableCell>
                 <TableCell>{renderCategory(listing)}</TableCell>
+                <TableCell>{renderRentTime(listing)}</TableCell>
                 <TableCell className="flex items-center space-x-2">
                   <Button variant="outline" size="sm" onClick={() => openEditDialog(listing)}>
                     <PenSquare className="h-4 w-4" />
@@ -278,7 +324,7 @@ const ListingManager = observer(() => {
             ))}
             {filteredListings.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   No listings. Add a new listing.
                 </TableCell>
               </TableRow>
@@ -299,9 +345,9 @@ const ListingManager = observer(() => {
           <div className="space-y-4 py-4">
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="name">Title *</Label>
               <Input
-                id="title"
+                id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Listing Title"
@@ -310,9 +356,9 @@ const ListingManager = observer(() => {
             </div>
             {/* Location */}
             <div className="space-y-2">
-              <Label htmlFor="location">Location *</Label>
+              <Label htmlFor="address">Location *</Label>
               <Input
-                id="location"
+                id="address"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="Location"
@@ -331,8 +377,8 @@ const ListingManager = observer(() => {
                 required
               />
             </div>
-            {/* Price Period (только для Rentals и Leisure) */}
-            {(activeTab === 'Rentals' || activeTab === 'Leisure') && (
+            {/* Price Period: отображаем только если выбрана категория Rentals или Leisure */}
+            {selectedCategory && (selectedCategory.name === "Rentals" || selectedCategory.name === "Leisure") && (
               <div className="space-y-2">
                 <Label htmlFor="unit_of_numeration">Price Period</Label>
                 <Input
@@ -353,15 +399,55 @@ const ListingManager = observer(() => {
                 placeholder="Description"
               />
             </div>
-            {/* Featured */}
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="featured">Featured</Label>
-              <Switch
-                id="featured"
-                checked={formData.featured}
-                onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
-              />
+            {/* Селекты, которые остаются без изменений */}
+            <div className="space-y-2">
+              <Label htmlFor="status">Primary Category</Label>
+              <select
+                id="status"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="border rounded p-2 w-full"
+              >
+                <option value="">Select Primary Category</option>
+                <option value="our portfolio">Our Portfolio</option>
+                <option value="leisure">Leisure</option>
+                <option value="rentals">Rentals</option>
+              </select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="categoryId">Category</Label>
+              <select
+                id="categoryId"
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                className="border rounded p-2 w-full"
+              >
+                <option value="">Select Category</option>
+                {categoriesStore.categories.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rentTimeId">Rent Time</Label>
+              <select
+                id="rentTimeId"
+                value={formData.rentTimeId}
+                onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
+                className="border rounded p-2 w-full"
+              >
+                <option value="">Select Rent Time</option>
+                {rentTimeStore.rentTimes.map((rt: any) => (
+                  <option key={rt.id} value={rt.id}>
+                    {rt.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* Custom Fields */}
+            {renderCustomFields()}
             {/* Images Upload */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>

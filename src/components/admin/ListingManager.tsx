@@ -115,9 +115,9 @@ const ListingManager = observer(() => {
     setCustomFieldsValues(
       listing.rental_custom_data
         ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
-            acc[curr.categoriesDataId] = curr.value;
-            return acc;
-          }, {})
+          acc[curr.categoriesDataId] = curr.value;
+          return acc;
+        }, {})
         : {}
     );
     setFileFields([]);
@@ -154,7 +154,15 @@ const ListingManager = observer(() => {
     form.append('description', formData.description);
     form.append('address', formData.address);
     form.append('price', formData.price);
-    form.append('unit_of_numeration', formData.unit_of_numeration);
+
+    // Если primary category не соответствует Rentals или Leisure, отправляем null
+    const unitValue =
+      (formData.status.toLowerCase() === 'rentals' ||
+        formData.status.toLowerCase() === 'leisure')
+        ? formData.unit_of_numeration
+        : null;
+    form.append('unit_of_numeration', JSON.stringify(unitValue));
+
     form.append('status', formData.status);
     form.append('featured', JSON.stringify(formData.featured));
     form.append('categoryId', formData.categoryId);
@@ -378,7 +386,7 @@ const ListingManager = observer(() => {
               />
             </div>
             {/* Price Period: отображаем только если выбрана категория Rentals или Leisure */}
-            {selectedCategory && (selectedCategory.name === "Rentals" || selectedCategory.name === "Leisure") && (
+            {(formData.status.toLowerCase() === "rentals" || formData.status.toLowerCase() === "leisure") && (
               <div className="space-y-2">
                 <Label htmlFor="unit_of_numeration">Price Period</Label>
                 <Input

@@ -344,7 +344,7 @@ const ListingManager = observer(() => {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingListing ? "Edit Listing" : "Add Listing"}</DialogTitle>
             <DialogDescription>

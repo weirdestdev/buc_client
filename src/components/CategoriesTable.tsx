@@ -12,7 +12,7 @@ import { Context } from '../main';
 import { ICategory } from '../store/CategoriesStore';
 
 // Базовый URL сервера (при необходимости заменить на актуальный)
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
 const CategoriesTable = observer(() => {
   const { categoriesStore } = useContext(Context)!; // получаем CategoriesStore из контекста

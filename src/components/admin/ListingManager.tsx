@@ -23,7 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { PenSquare, Trash2, Plus, Star } from 'lucide-react';
 import { Context } from '../../main';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
 interface IListFormData {
   name: string;

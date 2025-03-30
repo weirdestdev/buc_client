@@ -55,7 +55,7 @@ const ListingManager = observer(() => {
     categoryId: '',
     rentTimeId: '',
   });
-  
+
   // Состояние для динамических полей загрузки файлов
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
   // Состояние для значений кастомных полей выбранной категории.
@@ -113,9 +113,9 @@ const ListingManager = observer(() => {
     });
     setCustomFieldsValues(listing.rental_custom_data
       ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
-          acc[curr.categoriesDataId] = curr.value;
-          return acc;
-        }, {})
+        acc[curr.categoriesDataId] = curr.value;
+        return acc;
+      }, {})
       : {}
     );
     setFileFields([]);
@@ -127,11 +127,17 @@ const ListingManager = observer(() => {
   };
 
   const handleFileFieldChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files ? e.target.files[0] : null;
-    const newFileFields = [...fileFields];
-    newFileFields[index] = file;
-    setFileFields(newFileFields);
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      // Создаем копию текущего состояния
+      const newFileFields = [...fileFields];
+      // Заменяем поле по индексу выбранными файлами
+      // Метод splice удаляет один элемент и вместо него вставляет массив файлов
+      newFileFields.splice(index, 1, ...filesArray);
+      setFileFields(newFileFields);
+    }
   };
+
 
   const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const selectedCategoryId = e.target.value;
@@ -474,6 +480,7 @@ const ListingManager = observer(() => {
                 <div key={index} className="flex items-center gap-2">
                   <Input
                     type="file"
+                    multiple
                     onChange={(e) => handleFileFieldChange(e, index)}
                   />
                   {file && (

@@ -414,14 +414,14 @@ const ListingManager = observer(() => {
             </div>
             {/* Status */}
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Primary Category</Label>
               <select
                 id="status"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 className="border rounded p-2 w-full"
               >
-                <option value="">Select Status</option>
+                <option value="">Select Primary Category</option>
                 <option value="our portfolio">Our Portfolio</option>
                 <option value="leisure">Leisure</option>
                 <option value="rentals">Rentals</option>

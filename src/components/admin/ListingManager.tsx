@@ -25,22 +25,21 @@ import { Context } from '../../main';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
+// Интерфейс формы остался прежним, но будем использовать только необходимые поля
 interface IListFormData {
   name: string;
   description: string;
-  address: string;
+  address: string; // будем отображать как Location
   price: string;
-  unit_of_numeration: string;
-  status: string;
+  unit_of_numeration: string; // используется как Price Period для Rentals и Leisure
   featured: boolean;
-  categoryId: string;
-  rentTimeId: string;
 }
 
-type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
+type ActiveTab = 'Our Portfolio' | 'Rentals' | 'Leisure';
 
 const ListingManager = observer(() => {
   const { rentTimeStore, categoriesStore } = useContext(Context)!;
+  // Изменён порядок вкладок
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
@@ -50,15 +49,12 @@ const ListingManager = observer(() => {
     address: '',
     price: '',
     unit_of_numeration: '',
-    status: '',
     featured: false,
-    categoryId: '',
-    rentTimeId: '',
   });
 
   // Состояние для динамических полей загрузки файлов
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
-  // Состояние для значений кастомных полей выбранной категории.
+  // Дополнительные данные для кастомных полей оставляем без изменений
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -82,16 +78,15 @@ const ListingManager = observer(() => {
 
   const openAddDialog = () => {
     setEditingListing(null);
+    // При открытии формы, кроме очистки полей, можно установить статус на основе активной вкладки,
+    // если это необходимо на сервере (например, listing.status = activeTab.toLowerCase())
     setFormData({
       name: '',
       description: '',
       address: '',
       price: '',
       unit_of_numeration: '',
-      status: '',
       featured: false,
-      categoryId: '',
-      rentTimeId: '',
     });
     setFileFields([]);
     setCustomFieldsValues({});
@@ -106,16 +101,14 @@ const ListingManager = observer(() => {
       address: listing.address || '',
       price: listing.price?.toString() || '',
       unit_of_numeration: listing.unit_of_numeration || '',
-      status: listing.status || '',
       featured: listing.featured || false,
-      categoryId: listing.categoryId?.toString() || '',
-      rentTimeId: listing.rentTimeId?.toString() || '',
     });
+    // Если у редактируемого объявления есть кастомные поля, оставляем их
     setCustomFieldsValues(listing.rental_custom_data
       ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
         acc[curr.categoriesDataId] = curr.value;
         return acc;
-      }, {})
+      }, {} )
       : {}
     );
     setFileFields([]);
@@ -129,53 +122,32 @@ const ListingManager = observer(() => {
   const handleFileFieldChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      // Создаем копию текущего состояния
       const newFileFields = [...fileFields];
-      // Заменяем поле по индексу выбранными файлами
-      // Метод splice удаляет один элемент и вместо него вставляет массив файлов
       newFileFields.splice(index, 1, ...filesArray);
       setFileFields(newFileFields);
     }
   };
 
-
-  const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const selectedCategoryId = e.target.value;
-    setFormData({ ...formData, categoryId: selectedCategoryId });
-    const selectedCategory = categoriesStore.categories.find(
-      (cat: any) => cat.id.toString() === selectedCategoryId
-    );
-    if (selectedCategory && selectedCategory.customFields) {
-      const initialValues: Record<string, string> = {};
-      selectedCategory.customFields.forEach((field: any) => {
-        initialValues[field.id] = '';
-      });
-      setCustomFieldsValues(initialValues);
-    } else {
-      setCustomFieldsValues({});
-    }
-  };
-
-  const handleCustomFieldChange = (fieldId: string, value: string) => {
-    setCustomFieldsValues({ ...customFieldsValues, [fieldId]: value });
-  };
-
+  // При сохранении можно добавить автоустановку статуса в зависимости от активной вкладки,
+  // если сервер ожидает поле status
   const handleSaveListing = async () => {
     if (!formData.name || !formData.price) {
-      alert("Введите обязательные поля: Name и Price");
+      alert("Введите обязательные поля: Title и Price");
       return;
     }
 
     const form = new FormData();
     form.append('name', formData.name);
     form.append('description', formData.description);
-    form.append('address', formData.address);
+    form.append('address', formData.address); // Location
     form.append('price', formData.price);
-    form.append('unit_of_numeration', formData.unit_of_numeration);
-    form.append('status', formData.status);
+    // Добавляем поле Price Period только если категория Rentals или Leisure
+    if (activeTab === 'Rentals' || activeTab === 'Leisure') {
+      form.append('unit_of_numeration', formData.unit_of_numeration);
+    }
     form.append('featured', JSON.stringify(formData.featured));
-    form.append('categoryId', formData.categoryId);
-    form.append('rentTimeId', formData.rentTimeId);
+    // Устанавливаем статус в соответствии с активной вкладкой
+    form.append('status', activeTab.toLowerCase());
 
     const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
       categoriesDataId: fieldId,
@@ -206,6 +178,7 @@ const ListingManager = observer(() => {
     }
   };
 
+  // Для отображения категории и прочего оставляем как есть
   const renderCategory = (listing: any) => {
     const category = listing.category;
     if (!category) return '-';
@@ -247,44 +220,11 @@ const ListingManager = observer(() => {
     );
   };
 
-  const renderCustomFields = () => {
-    if (!formData.categoryId) return null;
-    const selectedCategory = categoriesStore.categories.find(
-      (cat: any) => cat.id.toString() === formData.categoryId
-    );
-    if (!selectedCategory || !selectedCategory.customFields) return null;
-    return (
-      <div className="space-y-2">
-        <Label>Custom Fields</Label>
-        {selectedCategory.customFields.map((field: any) => {
-          let inputType = 'text';
-          if (field.type === 'int' || field.type === 'double') {
-            inputType = 'number';
-          } else if (field.type === 'date') {
-            inputType = 'date';
-          }
-          return (
-            <div key={field.id} className="space-y-1">
-              <Label htmlFor={`custom-${field.id}`}>{field.name}</Label>
-              <Input
-                id={`custom-${field.id}`}
-                type={inputType}
-                value={customFieldsValues[field.id] || ''}
-                onChange={(e) => handleCustomFieldChange(field.id.toString(), e.target.value)}
-                placeholder={`Enter ${field.name}`}
-              />
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6">
-      {/* Вкладки */}
+      {/* Вкладки в нужном порядке */}
       <div className="flex space-x-4">
-        {(['Our Portfolio', 'Leisure', 'Rentals'] as ActiveTab[]).map((tab) => (
+        {(['Our Portfolio', 'Rentals', 'Leisure'] as ActiveTab[]).map((tab) => (
           <Button
             key={tab}
             variant={activeTab === tab ? "default" : "outline"}
@@ -307,11 +247,10 @@ const ListingManager = observer(() => {
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead>Name</TableHead>
+              <TableHead>Title</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Featured</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead>Rent Time</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -327,7 +266,6 @@ const ListingManager = observer(() => {
                   </Button>
                 </TableCell>
                 <TableCell>{renderCategory(listing)}</TableCell>
-                <TableCell>{renderRentTime(listing)}</TableCell>
                 <TableCell className="flex items-center space-x-2">
                   <Button variant="outline" size="sm" onClick={() => openEditDialog(listing)}>
                     <PenSquare className="h-4 w-4" />
@@ -340,7 +278,7 @@ const ListingManager = observer(() => {
             ))}
             {filteredListings.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                   No listings. Add a new listing.
                 </TableCell>
               </TableRow>
@@ -359,35 +297,26 @@ const ListingManager = observer(() => {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Name */}
+            {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="title">Title *</Label>
               <Input
-                id="name"
+                id="title"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Listing Name"
+                placeholder="Listing Title"
                 required
               />
             </div>
-            {/* Description */}
+            {/* Location */}
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="location">Location *</Label>
               <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Description"
-              />
-            </div>
-            {/* Address */}
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
+                id="location"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Address"
+                placeholder="Location"
+                required
               />
             </div>
             {/* Price */}
@@ -402,30 +331,27 @@ const ListingManager = observer(() => {
                 required
               />
             </div>
-            {/* Unit */}
+            {/* Price Period (только для Rentals и Leisure) */}
+            {(activeTab === 'Rentals' || activeTab === 'Leisure') && (
+              <div className="space-y-2">
+                <Label htmlFor="unit_of_numeration">Price Period</Label>
+                <Input
+                  id="unit_of_numeration"
+                  value={formData.unit_of_numeration}
+                  onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
+                  placeholder="Price Period (e.g. Month, Week, Day)"
+                />
+              </div>
+            )}
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="unit_of_numeration">Unit</Label>
+              <Label htmlFor="description">Description</Label>
               <Input
-                id="unit_of_numeration"
-                value={formData.unit_of_numeration}
-                onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
-                placeholder="Unit (e.g. $, €, etc.)"
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Description"
               />
-            </div>
-            {/* Status */}
-            <div className="space-y-2">
-              <Label htmlFor="status">Primary Category</Label>
-              <select
-                id="status"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="border rounded p-2 w-full"
-              >
-                <option value="">Select Primary Category</option>
-                <option value="our portfolio">Our Portfolio</option>
-                <option value="leisure">Leisure</option>
-                <option value="rentals">Rentals</option>
-              </select>
             </div>
             {/* Featured */}
             <div className="flex items-center space-x-2">
@@ -436,42 +362,6 @@ const ListingManager = observer(() => {
                 onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
               />
             </div>
-            {/* Category */}
-            <div className="space-y-2">
-              <Label htmlFor="categoryId">Category</Label>
-              <select
-                id="categoryId"
-                value={formData.categoryId}
-                onChange={handleCategoryChange}
-                className="border rounded p-2 w-full"
-              >
-                <option value="">Select Category</option>
-                {categoriesStore.categories.map((cat: any) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Rent Time */}
-            <div className="space-y-2">
-              <Label htmlFor="rentTimeId">Rent Time</Label>
-              <select
-                id="rentTimeId"
-                value={formData.rentTimeId}
-                onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
-                className="border rounded p-2 w-full"
-              >
-                <option value="">Select Rent Time</option>
-                {rentTimeStore.rentTimes.map((rt: any) => (
-                  <option key={rt.id} value={rt.id}>
-                    {rt.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Custom Fields */}
-            {renderCustomFields()}
             {/* Images Upload */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>

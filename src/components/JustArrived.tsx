@@ -126,7 +126,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           ) : (
             <div className="image-loading h-60 relative">
               <img 
-                src={property.image} 
+                src={property.rentals_images[0]} 
                 alt={property.name} 
                 className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
                 onLoad={() => handleImageLoad(property.id)} 

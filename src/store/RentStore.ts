@@ -11,6 +11,7 @@ import {
   fetchRentals,
   fetchFeaturedRentals,
   fetchRentalsByCategory,
+  fetchStatusRentals // Импорт нового метода из rentAPI
 } from "../http/rentAPI";
 
 export interface IRentTime {
@@ -210,6 +211,24 @@ class RentTimeStore {
       });
     } catch (error) {
       console.error("Ошибка загрузки объявлений по категории:", error);
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    }
+  }
+
+  // Загрузка объявлений по статусу (our portfolio, leisure, rentals)
+  async loadRentalsByStatus(status: string) {
+    this.isLoading = true;
+    try {
+      const data = await fetchStatusRentals(status);
+      runInAction(() => {
+        // Можно обновлять общий список объявлений или хранить отдельно, в зависимости от логики приложения
+        this.rentals = data;
+      });
+    } catch (error) {
+      console.error("Ошибка загрузки объявлений по статусу:", error);
     } finally {
       runInAction(() => {
         this.isLoading = false;

@@ -59,6 +59,12 @@ export const fetchFeaturedRentals = async () => {
   return data;
 };
 
+// Получение объявлений по статусу
+export const fetchStatusRentals = async (status) => {
+  const { data } = await $authHost.get(`api/rentals/status/${status}`);
+  return data;
+};
+
 // Получение объявлений по категории
 export const fetchRentalsByCategory = async (categoryId: number) => {
   const { data } = await $authHost.get(`api/rentals/category/${categoryId}`);

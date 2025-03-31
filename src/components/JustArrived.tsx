@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { ArrowDownAZ, ArrowUpAZ, Building, Home, MapPin, EuroIcon, Bed, Bath, Lock, ArrowRight } from 'lucide-react';
+import { ArrowDownAZ, ArrowUpAZ, Building, Home, MapPin, EuroIcon, Bed, Bath, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +7,47 @@ import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
 
 interface JustArrivedProps {
   openAuthDialog?: (tab: "login" | "register") => void;
+}
+
+// Компонент-слайдер для изображений
+function PropertySlider({ images, propertyId, alt }: { images: any[]; propertyId: number; alt: string; }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  return (
+    <div className="relative h-60">
+      <img 
+        src={images[currentIndex].image} 
+        alt={alt} 
+        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+      />
+      {images.length > 1 && (
+        <>
+          <button 
+            onClick={handlePrev} 
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 rounded"
+          >
+            Prev
+          </button>
+          <button 
+            onClick={handleNext} 
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 rounded"
+          >
+            Next
+          </button>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function JustArrived({
@@ -22,7 +62,7 @@ export default function JustArrived({
   const { isAuthenticated, getAllJustArrivedListings, getFeaturedJustArrivedListings } = useAuth();
   
   useEffect(() => {
-    // Get properties based on authentication status
+    // Получаем объявления в зависимости от статуса авторизации
     const properties = isAuthenticated 
       ? getAllJustArrivedListings() 
       : getFeaturedJustArrivedListings();
@@ -38,10 +78,7 @@ export default function JustArrived({
       });
     }
     
-    result.sort((a, b) => {
-      return sortDirection === 'asc' ? a.price - b.price : b.price - a.price;
-    });
-    
+    result.sort((a, b) => sortDirection === 'asc' ? a.price - b.price : b.price - a.price);
     setFilteredProperties(result);
   }, [propertyType, sortDirection, isAuthenticated, getAllJustArrivedListings, getFeaturedJustArrivedListings]);
   
@@ -53,9 +90,7 @@ export default function JustArrived({
   };
   
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('de-DE', {
-      maximumFractionDigits: 0
-    }).format(price);
+    return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
   };
   
   const handlePropertyClick = (property: any) => {
@@ -63,62 +98,84 @@ export default function JustArrived({
     setPropertyDialogOpen(true);
   };
   
-  const renderPropertyCard = (property: any) => (
-    <Card 
-      key={property.id} 
-      className="w-full overflow-hidden group hover-lift prevent-screenshot cursor-pointer" 
-      onClick={() => handlePropertyClick(property)}
-    >
-      <div className="image-loading h-60 relative">
-        <img 
-          src={property.image} 
-          alt={property.title} 
-          className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
-          onLoad={() => handleImageLoad(property.id)} 
-        />
-        {!isAuthenticated && (
-          <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
-            <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
-              <Lock className="w-4 h-4 text-primary mr-2" />
-              <span className="text-xs font-medium">Members Only</span>
+  const renderPropertyCard = (property: any) => {
+    // Поиск кастомных полей для Bedrooms/Beds и Bathrooms
+    const bedroomsField = property.rental_custom_data?.find((item: any) => {
+      const name = item.categories_datum.name.toLowerCase();
+      return name.includes("bedroom") || name.includes("bed");
+    });
+    const bathroomsField = property.rental_custom_data?.find((item: any) => {
+      const name = item.categories_datum.name.toLowerCase();
+      return name.includes("bathroom") || name.includes("bath");
+    });
+
+    return (
+      <Card 
+        key={property.id} 
+        className="w-full overflow-hidden group hover-lift prevent-screenshot cursor-pointer" 
+        onClick={() => handlePropertyClick(property)}
+      >
+        <div className="relative">
+          {property.rentals_images && property.rentals_images.length > 0 ? (
+            <PropertySlider 
+              images={property.rentals_images} 
+              propertyId={property.id} 
+              alt={property.title} 
+            />
+          ) : (
+            <div className="h-60 relative">
+              <img 
+                src={property.image} 
+                alt={property.title} 
+                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
+                onLoad={() => handleImageLoad(property.id)} 
+              />
             </div>
-          </div>
-        )}
-      </div>
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="font-medium text-lg property-card-title">{property.title}</h3>
-        </div>
-        <div className="flex items-center text-muted-foreground text-sm mb-4 property-card-location">
-          <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-          <span>{property.location}</span>
-        </div>
-        <div className="flex justify-between items-center mt-4">
-          <div className="font-display text-lg font-medium flex items-center">
-            <EuroIcon className="w-5 h-5 mr-1 flex-shrink-0" />
-            {formatPrice(property.price)}
-          </div>
-          {(property.bedrooms > 0 || property.bathrooms > 0) && (
-            <div className="text-sm text-muted-foreground flex items-center space-x-2">
-              {property.bedrooms > 0 && (
-                <div className="flex items-center">
-                  <Bed className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span>{property.bedrooms}</span>
-                </div>
-              )}
-              {property.bedrooms > 0 && property.bathrooms > 0 && <span>·</span>}
-              {property.bathrooms > 0 && (
-                <div className="flex items-center">
-                  <Bath className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span>{property.bathrooms}</span>
-                </div>
-              )}
+          )}
+          {!isAuthenticated && (
+            <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
+              <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
+                <Lock className="w-4 h-4 text-primary mr-2" />
+                <span className="text-xs font-medium">Members Only</span>
+              </div>
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
-  );
+        <CardContent className="p-6">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="font-medium text-lg property-card-title">{property.title}</h3>
+          </div>
+          <div className="flex items-center text-muted-foreground text-sm mb-4 property-card-location">
+            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+            <span>{property.location}</span>
+          </div>
+          <div className="flex justify-between items-center mt-4">
+            <div className="font-display text-lg font-medium flex items-center">
+              <EuroIcon className="w-5 h-5 mr-1 flex-shrink-0" />
+              {formatPrice(property.price)}
+            </div>
+            {(bedroomsField || bathroomsField) && (
+              <div className="text-sm text-muted-foreground flex items-center space-x-2">
+                {bedroomsField && (
+                  <div className="flex items-center">
+                    <Bed className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span>{bedroomsField.value}</span>
+                  </div>
+                )}
+                {bedroomsField && bathroomsField && <span>·</span>}
+                {bathroomsField && (
+                  <div className="flex items-center">
+                    <Bath className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span>{bathroomsField.value}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
   
   return (
     <section id="just-arrived" className="section-padding bg-muted/30 w-full overflow-hidden">

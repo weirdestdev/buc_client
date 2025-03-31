@@ -9,9 +9,16 @@ const $authHost = axios.create({
 });
 
 const authInterceptor = config => {
-    config.headers.authorization = `Bearer ${localStorage.getItem('token')}`;
+    // Если admin-token есть, используем его, иначе обычный token
+    const adminToken = localStorage.getItem('admin-token');
+    const userToken = localStorage.getItem('token');
+    const token = adminToken || userToken;
+    if (token) {
+      config.headers.authorization = `Bearer ${token}`;
+    }
     return config;
-}
+  };
+  
 
 $authHost.interceptors.request.use(authInterceptor);
 

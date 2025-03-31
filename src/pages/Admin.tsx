@@ -69,6 +69,7 @@ const Admin = observer(() => {
         title: 'Login successful',
         description: 'Welcome to the admin dashboard.',
       });
+      window.location.reload();
     } catch (error: any) {
       toast({
         title: 'Login failed',

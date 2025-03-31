@@ -58,7 +58,7 @@ const collaborators: Collaborator[] = [
     role: "Interior Design",
     image: "/lovable-uploads/25623b27-1190-4695-981e-254b5069186c.png",
     logoClass: "max-h-56",
-    url: "http://161.97.121.171:3000/static/CAM%20PORTFOLIO.pdf"
+    url: "https://api.businessunit.club/static/camportfolio.pdf"
   }
 ];
 

@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { ArrowDownAZ, ArrowUpAZ, Building, Home, MapPin, EuroIcon, Bed, Bath, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
+import { Context } from '@/main';
 
 interface JustArrivedProps {
   openAuthDialog?: (tab: "login" | "register") => void;
 }
 
 // Компонент-слайдер для изображений
-function PropertySlider({ images, propertyId, alt }: { images: any[]; propertyId: number; alt: string; }) {
+function PropertySlider({ images, alt }: { images: any[]; alt: string; }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handlePrev = (e: React.MouseEvent) => {
@@ -50,9 +51,7 @@ function PropertySlider({ images, propertyId, alt }: { images: any[]; propertyId
   );
 }
 
-export default function JustArrived({
-  openAuthDialog
-}: JustArrivedProps) {
+export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const [propertyType, setPropertyType] = useState<string>("all");
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -60,53 +59,63 @@ export default function JustArrived({
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
   const { isAuthenticated, getAllJustArrivedListings, getFeaturedJustArrivedListings } = useAuth();
-  
+  const { rentTimeStore } = useContext(Context)!;
+
   useEffect(() => {
-    // Получаем объявления в зависимости от статуса авторизации
-    const properties = isAuthenticated 
-      ? getAllJustArrivedListings() 
-      : getFeaturedJustArrivedListings();
-    
-    let result = [...properties];
-    
-    if (propertyType !== "all") {
-      result = result.filter(property => {
-        if (propertyType === "villas") return property.type === "villa" || property.type === "finca";
-        if (propertyType === "apartments") return property.type === "apartment" || property.type === "building";
-        if (propertyType === "plots") return property.type === "plot" || property.type === "project";
-        return true;
-      });
-    }
-    
-    result.sort((a, b) => sortDirection === 'asc' ? a.price - b.price : b.price - a.price);
-    setFilteredProperties(result);
-  }, [propertyType, sortDirection, isAuthenticated, getAllJustArrivedListings, getFeaturedJustArrivedListings]);
+    async function loadProperties() {
+      let properties: any[] = [];
+      if (isAuthenticated) {
+        // Ждём выполнения метода и затем берём данные из стора
+        await rentTimeStore.loadRentalsByStatus('our portfolio');
+        properties = rentTimeStore.rentals;
+      } else {
+        properties = getFeaturedJustArrivedListings();
+      }
   
+      // Фильтрация по типу недвижимости, если выбрано не "all"
+      let result = [...properties];
+      if (propertyType !== "all") {
+        result = result.filter(property => {
+          if (propertyType === "villas") return property.type === "villa" || property.type === "finca";
+          if (propertyType === "apartments") return property.type === "apartment" || property.type === "building";
+          if (propertyType === "plots") return property.type === "plot" || property.type === "project";
+          return true;
+        });
+      }
+      
+      // Сортировка по цене
+      result.sort((a, b) => sortDirection === 'asc' ? a.price - b.price : b.price - a.price);
+      
+      setFilteredProperties(result);
+    }
+    loadProperties();
+  }, [propertyType, sortDirection, isAuthenticated, getFeaturedJustArrivedListings, rentTimeStore]);  
+
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({
       ...prev,
       [id]: true
     }));
   };
-  
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
   };
-  
+
   const handlePropertyClick = (property: any) => {
     setSelectedProperty(property);
     setPropertyDialogOpen(true);
   };
-  
+
   const renderPropertyCard = (property: any) => {
-    // Поиск кастомных полей для Bedrooms/Beds и Bathrooms
+    // Поиск кастомных полей для Bedrooms/Bathrooms
     const bedroomsField = property.rental_custom_data?.find((item: any) => {
       const name = item.categories_datum.name.toLowerCase();
-      return name.includes("bedroom") || name.includes("bed");
+      return name.includes("bed") && !name.includes("bath");
     });
     const bathroomsField = property.rental_custom_data?.find((item: any) => {
       const name = item.categories_datum.name.toLowerCase();
-      return name.includes("bathroom") || name.includes("bath");
+      return name.includes("bath");
     });
 
     return (
@@ -117,16 +126,12 @@ export default function JustArrived({
       >
         <div className="relative">
           {property.rentals_images && property.rentals_images.length > 0 ? (
-            <PropertySlider 
-              images={property.rentals_images} 
-              propertyId={property.id} 
-              alt={property.title} 
-            />
+            <PropertySlider images={property.rentals_images} alt={property.name} />
           ) : (
-            <div className="h-60 relative">
+            <div className="image-loading h-60 relative">
               <img 
                 src={property.image} 
-                alt={property.title} 
+                alt={property.name} 
                 className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
                 onLoad={() => handleImageLoad(property.id)} 
               />
@@ -143,11 +148,11 @@ export default function JustArrived({
         </div>
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-3">
-            <h3 className="font-medium text-lg property-card-title">{property.title}</h3>
+            <h3 className="font-medium text-lg property-card-title">{property.name}</h3>
           </div>
           <div className="flex items-center text-muted-foreground text-sm mb-4 property-card-location">
             <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-            <span>{property.location}</span>
+            <span>{property.address}</span>
           </div>
           <div className="flex justify-between items-center mt-4">
             <div className="font-display text-lg font-medium flex items-center">
@@ -176,7 +181,7 @@ export default function JustArrived({
       </Card>
     );
   };
-  
+
   return (
     <section id="just-arrived" className="section-padding bg-muted/30 w-full overflow-hidden">
       <div className="container mx-auto px-0 sm:px-4">

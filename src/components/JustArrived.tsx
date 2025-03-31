@@ -10,47 +10,6 @@ interface JustArrivedProps {
   openAuthDialog?: (tab: "login" | "register") => void;
 }
 
-// Компонент-слайдер для изображений
-function PropertySlider({ images, alt }: { images: any[]; alt: string; }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const handlePrev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
-
-  const handleNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % images.length);
-  };
-
-  return (
-    <div className="relative h-60">
-      <img 
-        src={images[currentIndex].image} 
-        alt={alt} 
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-      />
-      {images.length > 1 && (
-        <>
-          <button 
-            onClick={handlePrev} 
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 rounded"
-          >
-            Prev
-          </button>
-          <button 
-            onClick={handleNext} 
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 rounded"
-          >
-            Next
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
-
 export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const [propertyType, setPropertyType] = useState<string>("all");
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
@@ -66,7 +25,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       let properties: any[] = [];
       await rentTimeStore.loadRentalsByStatus('our portfolio');
       properties = rentTimeStore.rentals;
-  
+
       // Фильтрация по типу недвижимости, если выбрано не "all"
       let result = [...properties];
       if (propertyType !== "all") {
@@ -77,14 +36,14 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           return true;
         });
       }
-      
+
       // Сортировка по цене
       result.sort((a, b) => sortDirection === 'asc' ? a.price - b.price : b.price - a.price);
-      
+
       setFilteredProperties(result);
     }
     loadProperties();
-  }, [propertyType, sortDirection, isAuthenticated, getFeaturedJustArrivedListings, rentTimeStore]);  
+  }, [propertyType, sortDirection, isAuthenticated, getFeaturedJustArrivedListings, rentTimeStore]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({
@@ -115,24 +74,20 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
     });
 
     return (
-      <Card 
-        key={property.id} 
-        className="w-full overflow-hidden group hover-lift prevent-screenshot cursor-pointer" 
+      <Card
+        key={property.id}
+        className="w-full overflow-hidden group hover-lift prevent-screenshot cursor-pointer"
         onClick={() => handlePropertyClick(property)}
       >
         <div className="relative">
-          {property.rentals_images && property.rentals_images.length > 0 ? (
-            <PropertySlider images={property.rentals_images} alt={property.name} />
-          ) : (
-            <div className="image-loading h-60 relative">
-              <img 
-                src={property.rentals_images[0]} 
-                alt={property.name} 
-                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
-                onLoad={() => handleImageLoad(property.id)} 
-              />
-            </div>
-          )}
+          <div className="image-loading h-60 relative">
+            <img
+              src={property.rentals_images[0]}
+              alt={property.name}
+              className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
+              onLoad={() => handleImageLoad(property.id)}
+            />
+          </div>
           {!isAuthenticated && (
             <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
               <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
@@ -187,50 +142,50 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
             Explore our newest properties for sale that have just been added to our exclusive collection
           </p>
         </div>
-        
+
         <div className="mb-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-6">
             <div className="flex flex-wrap items-center gap-2 bg-secondary rounded-lg p-2 w-full md:w-auto">
-              <button 
-                onClick={() => setPropertyType("all")} 
+              <button
+                onClick={() => setPropertyType("all")}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "all" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
               >
                 All
               </button>
-              <button 
-                onClick={() => setPropertyType("villas")} 
+              <button
+                onClick={() => setPropertyType("villas")}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "villas" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
               >
                 <Home className="inline-block w-4 h-4 mr-1" />
                 Houses
               </button>
-              <button 
-                onClick={() => setPropertyType("apartments")} 
+              <button
+                onClick={() => setPropertyType("apartments")}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "apartments" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
               >
                 <Building className="inline-block w-4 h-4 mr-1" />
                 Flats
               </button>
-              <button 
-                onClick={() => setPropertyType("buildings")} 
+              <button
+                onClick={() => setPropertyType("buildings")}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "buildings" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
               >
                 <Building className="inline-block w-4 h-4 mr-1" />
                 Buildings
               </button>
-              <button 
-                onClick={() => setPropertyType("plots")} 
+              <button
+                onClick={() => setPropertyType("plots")}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "plots" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
               >
                 <MapPin className="inline-block w-4 h-4 mr-1" />
                 Plots
               </button>
             </div>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')} 
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
               className="flex items-center gap-1 w-full md:w-auto self-end md:self-auto"
             >
               {sortDirection === 'asc' ? (
@@ -246,17 +201,17 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
               )}
             </Button>
           </div>
-            
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {filteredProperties.map(renderPropertyCard)}
           </div>
         </div>
       </div>
-      
-      <PropertyDetailsDialog 
-        property={selectedProperty} 
-        open={propertyDialogOpen} 
-        onOpenChange={setPropertyDialogOpen} 
+
+      <PropertyDetailsDialog
+        property={selectedProperty}
+        open={propertyDialogOpen}
+        onOpenChange={setPropertyDialogOpen}
       />
     </section>
   );

@@ -108,6 +108,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const renderPropertyCard = (property: any) => {
+    console.log(property);
     // Поиск кастомных полей для Bedrooms/Bathrooms
     const bedroomsField = property.rental_custom_data?.find((item: any) => {
       const name = item.categories_datum.name.toLowerCase();

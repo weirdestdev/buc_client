@@ -14,41 +14,58 @@ export interface IUser {
   exp: number; // время истечения токена
 }
 
+export interface IAdmin extends Omit<IUser, 'purpose'> {
+
+}
+
 export default class UserStore {
   private _isAuth: boolean;
+  private _isAuthAdmin: boolean;
   private _user: IUser | null;
+  private _admin: IAdmin | null; // Добавляем свойство для админа
 
   constructor() {
     this._isAuth = false;
+    this._isAuthAdmin = false;
     this._user = null;
+    this._admin = null;
     makeAutoObservable(this);
   }
 
-  // Метод для установки флага авторизации
+  // Геттеры и сеттеры для обычного пользователя
   setIsAuth(bool: boolean): void {
     this._isAuth = bool;
   }
 
-  // Метод для сохранения данных пользователя
+  setIsAuthAdmin(bool: boolean): void {
+    this._isAuthAdmin = bool;
+  }
+
   setUser(user: IUser): void {
     this._user = user;
   }
 
-  // Геттер для флага авторизации
   get isAuth(): boolean {
     return this._isAuth;
   }
 
-  // Геттер для данных пользователя
   get user(): IUser | null {
     return this._user;
   }
 
-  /**
-   * Выполняет авторизацию пользователя.
-   * Вызывает API для входа, сохраняет токен в localStorage,
-   * обновляет состояние стора и получает данные пользователя из токена.
-   */
+  // Методы для админа
+  setAdmin(admin: IAdmin): void {
+    this._admin = admin;
+  }
+
+  get admin(): IAdmin | null {
+    return this._admin;
+  }
+
+  get isAuthAdmin(): boolean {
+    return this._isAuthAdmin;
+  }
+
   async loginUser(email: string, password: string): Promise<void> {
     const decodedUser = await login(email, password);
     this.setIsAuth(true);
@@ -56,16 +73,11 @@ export default class UserStore {
   }
 
   async loginAdmin(email: string, password: string): Promise<void> {
-    const decodedUser = await adminLogin(email, password);
-    this.setIsAuth(true);
-    this.setUser(decodedUser);
+    const decodedAdmin = await adminLogin(email, password);
+    this.setIsAuthAdmin(true);
+    this.setAdmin(decodedAdmin);
   }
 
-  /**
-   * Выполняет регистрацию пользователя.
-   * Вызывает API для регистрации, сохраняет токен в localStorage,
-   * обновляет состояние стора и получает данные пользователя из токена.
-   */
   async registerUser(
     email: string,
     password: string,
@@ -79,9 +91,10 @@ export default class UserStore {
   }
 
   logout(): void {
-    localStorage.removeItem('token'); // удаляем токен из localStorage
+    localStorage.removeItem('token');
     localStorage.removeItem('admin-token');
-    this.setUser(null);               // очищаем данные пользователя
-    this.setIsAuth(false);            // сбрасываем флаг авторизации
+    this.setUser(null);
+    this.setAdmin(null);
+    this.setIsAuth(false);
   }
 }

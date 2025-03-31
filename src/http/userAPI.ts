@@ -1,6 +1,6 @@
 import { $authHost, $host } from "./index";
 import { jwtDecode } from "jwt-decode";
-import { IUser } from "../store/UserStore"; // убедитесь, что путь корректный
+import { IAdmin, IUser } from "../store/UserStore"; // убедитесь, что путь корректный
 
 export const registration = async (
   email: string, 
@@ -26,14 +26,20 @@ export const login = async (
 export const adminLogin = async (
   email: string, 
   password: string
-): Promise<IUser> => {
+): Promise<IAdmin> => {
     const { data } = await $host.post('api/user/adminLogin', { email, password });
     localStorage.setItem('admin-token', data.token);
-    return jwtDecode<IUser>(data.token);
+    return jwtDecode<IAdmin>(data.token);
 }
 
 export const check = async () => {
     const {data} = await $authHost.get('/api/user/auth');
     localStorage.setItem('token', data.token);
     return jwtDecode<IUser>(data.token);
+}
+
+export const checkAdmin = async () => {
+  const {data} = await $authHost.get('/api/user/auth/admin');
+  localStorage.setItem('admin-token', data.token);
+  return jwtDecode<IAdmin>(data.token);
 }

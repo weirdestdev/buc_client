@@ -99,10 +99,10 @@ const Admin = observer(() => {
   const confirmUserAction = async () => {
     if (!selectedUser) return;
 
-    const currentUserRole = userStore.user.role; // Получаем роль текущего пользователя
+    const currentAdminRole = userStore.admin?.role; // Теперь получаем роль из userStore.admin
 
     // Проверка: модератор не может банить или разбанивать модератора
-    if (selectedUser.role === 'moderator' && currentUserRole !== 'admin') {
+    if (selectedUser.role === 'moderator' && currentAdminRole !== 'admin') {
       return toast({
         title: 'Access Denied',
         description: 'You do not have permission to perform this action.',
@@ -162,7 +162,7 @@ const Admin = observer(() => {
   };
 
   // Если админ не авторизован – показываем форму логина
-  if (!localStorage.getItem('admin-token')) {
+  if (!localStorage.getItem('admin-token') || !userStore.admin || !userStore.isAuthAdmin) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
         <div className="w-full max-w-md space-y-8">
@@ -246,13 +246,13 @@ const Admin = observer(() => {
               <ListIcon className="mr-2 h-4 w-4" />
               <span>Listing Management</span>
             </TabsTrigger>
-            {userStore.user?.role === 'admin' && (
+            {userStore.admin?.role === 'admin' && (
               <TabsTrigger value="categories" className="flex items-center">
                 <Tag className="mr-2 h-4 w-4" />
                 <span>Categories</span>
               </TabsTrigger>
             )}
-            {userStore.user?.role === 'admin' && (
+            {userStore.admin?.role === 'admin' && (
               <TabsTrigger value="renttime" className="flex items-center">
                 <Calendar className="mr-2 h-4 w-4" />
                 <span>Rent Time</span>
@@ -345,7 +345,7 @@ const Admin = observer(() => {
             {/* Таблица пользователей */}
             <UserTable
               users={userWorkStore.users}
-              currentUserRole={userStore.user?.role}
+              currentUserRole={userStore.admin?.role || ''}
               onApprove={(user) => handleUserAction(user, 'approve')}
               onBlock={(user) => handleUserAction(user, 'block')}
               onUnblock={(user) => handleUserAction(user, 'unblock')}
@@ -375,10 +375,10 @@ const Admin = observer(() => {
             <ListingManager />
           </TabsContent>
           <TabsContent value="categories">
-            {userStore.user?.role === 'admin' && <CategoriesTable />}
+            {userStore.admin?.role === 'admin' && <CategoriesTable />}
           </TabsContent>
           <TabsContent value="renttime">
-            {userStore.user?.role === 'admin' && <RentTimeTable />}
+            {userStore.admin?.role === 'admin' && <RentTimeTable />}
           </TabsContent>
         </Tabs>
       </main>
@@ -422,7 +422,7 @@ const Admin = observer(() => {
 
 interface UserTableProps {
   users: any[];
-  currentUserRole: string; // Добавили текущую роль пользователя
+  currentUserRole: string; // Роль текущего администратора
   onApprove: (user: any) => void;
   onBlock: (user: any) => void;
   onUnblock: (user: any) => void;
@@ -496,7 +496,7 @@ function UserTable({ users, currentUserRole, onApprove, onBlock, onUnblock }: Us
                 <div className="flex space-x-2">
                   {user.role !== 'admin' && (
                     <>
-                      {/* Проверяем, является ли текущий пользователь модератором и пытается ли управлять другим модератором */}
+                      {/* Проверяем, является ли текущий администратор модератором и пытается ли управлять другим модератором */}
                       {(currentUserRole === 'admin' || user.role !== 'moderator') && (
                         <>
                           {user.status === 'pending' && (

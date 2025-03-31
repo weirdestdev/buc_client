@@ -13,7 +13,7 @@ import LoadingScreen from "./components/LoadingScreen";
 import PrivateRoute from "./components/PrivateRoute";
 import { observer } from "mobx-react-lite";
 import { Context } from "./main";
-import { check } from "./http/userAPI";
+import { check, checkAdmin } from "./http/userAPI";
 import NoAccess from "./pages/NoAccess";
 import Blocked from "./pages/Blocked"; // импортируем страницу Blocked
 
@@ -40,6 +40,15 @@ const App = observer(() => {
       .finally(() => {
         setLoading(false); // Устанавливаем загрузку в false после завершения запроса
       });
+
+      checkAdmin()
+      .then((data) => {
+        userStore.setIsAuthAdmin(true);
+        userStore.setAdmin(data);
+        console.log(data);
+      }).catch((error) => {
+        console.error("Ошибка проверки:", error);
+      })
   }, [userStore]);
 
   // Если загрузка завершена и статус пользователя "blocked", отображаем всегда страницу Blocked

@@ -81,12 +81,21 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       >
         <div className="relative">
           <div className="image-loading h-60 relative">
-            <img
-              src={property.rentals_images[0].image}
-              alt={property.name}
-              className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
-              onLoad={() => handleImageLoad(property.id)}
-            />
+            {property.rentals_images && property.rentals_images.length > 0 ? (
+              <img
+                src={property.rentals_images[0].image}
+                alt={property.name}
+                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
+                onLoad={() => handleImageLoad(property.id)}
+              />
+            ) : (
+              <img
+                src={property.image || '/fallback-image.jpg'} // fallback, если rentals_images пустой
+                alt={property.name}
+                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
+                onLoad={() => handleImageLoad(property.id)}
+              />
+            )}
           </div>
           {!isAuthenticated && (
             <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">

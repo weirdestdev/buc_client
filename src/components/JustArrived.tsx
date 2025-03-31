@@ -64,13 +64,8 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   useEffect(() => {
     async function loadProperties() {
       let properties: any[] = [];
-      if (isAuthenticated) {
-        // Ждём выполнения метода и затем берём данные из стора
-        await rentTimeStore.loadRentalsByStatus('our portfolio');
-        properties = rentTimeStore.rentals;
-      } else {
-        properties = getFeaturedJustArrivedListings();
-      }
+      await rentTimeStore.loadRentalsByStatus('our portfolio');
+      properties = rentTimeStore.rentals;
   
       // Фильтрация по типу недвижимости, если выбрано не "all"
       let result = [...properties];

@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, Lock } from 'lucide-react';
+import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, ArrowRight, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
 import { Context } from '@/main';
 
-interface PortfolioProps {
+interface RentalsProps {
   openAuthDialog?: (tab: "login" | "register") => void;
 }
 
-export default function Portfolio({ openAuthDialog }: PortfolioProps) {
+export default function Rentals({ openAuthDialog }: RentalsProps) {
+  // Состояние для выбранного времени аренды вместо категории
+  const [selectedRentTime, setSelectedRentTime] = useState<string | "all">("all");
+  const [rentTimes, setRentTimes] = useState<any[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
@@ -19,30 +23,31 @@ export default function Portfolio({ openAuthDialog }: PortfolioProps) {
   const { rentTimeStore, userStore } = useContext(Context)!;
 
   useEffect(() => {
-    async function loadProperties() {
-      await rentTimeStore.loadRentalsByStatus('rentals');
-      let properties = rentTimeStore.rentals;
+    async function loadData() {
+      // Загружаем все времена аренды и все объявления (rentals)
+      await rentTimeStore.loadRentTimes();
+      await rentTimeStore.loadRentals();
+      setRentTimes(rentTimeStore.rentTimes);
 
-      // Фильтрация по featured
-      properties = properties.filter(property => property.featured === true);
-
-      // Сортировка по rentTimeId (вместо несуществующего rent_time)
-      properties.sort((a, b) =>
+      let rentals = [...rentTimeStore.rentals];
+      // Если выбрано конкретное время аренды, фильтруем по rentTimeId
+      if (selectedRentTime !== "all") {
+        rentals = rentals.filter(rental => rental.rentTimeId === Number(selectedRentTime));
+      }
+      // Сортировка по цене (оставляем ту же логику сортировки)
+      rentals.sort((a, b) =>
         sortDirection === 'asc'
-          ? a.rentTimeId - b.rentTimeId
-          : b.rentTimeId - a.rentTimeId
+          ? a.price - b.price
+          : b.price - a.price
       );
 
-      setFilteredProperties(properties);
+      setFilteredProperties(rentals);
     }
-    loadProperties();
-  }, [sortDirection, rentTimeStore]);
+    loadData();
+  }, [selectedRentTime, sortDirection, rentTimeStore]);
 
   const handleImageLoad = (id: number) => {
-    setLoadedImages(prev => ({
-      ...prev,
-      [id]: true
-    }));
+    setLoadedImages(prev => ({ ...prev, [id]: true }));
   };
 
   const handlePropertyClick = (property: any) => {
@@ -54,64 +59,132 @@ export default function Portfolio({ openAuthDialog }: PortfolioProps) {
     setPropertyDialogOpen(true);
   };
 
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
+  };
+
+  const renderPropertyCard = (property: any) => (
+    <Card
+      key={property.id}
+      className="w-full overflow-hidden group hover-lift prevent-screenshot cursor-pointer"
+      onClick={() => handlePropertyClick(property)}
+    >
+      <div className="image-loading h-60 relative">
+        <img 
+          src={property.images && property.images.length > 0 ? property.images[0] : '/fallback-image.jpg'} 
+          alt={property.name} 
+          className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
+          onLoad={() => handleImageLoad(property.id)} 
+        />
+        {userStore.user?.status !== 'approved' && (
+          <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
+            <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
+              <Lock className="w-4 h-4 text-primary mr-2" />
+              <span className="text-xs font-medium">Members Only</span>
+            </div>
+          </div>
+        )}
+      </div>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-medium text-lg">{property.name}</h3>
+        </div>
+        <div className="flex items-center text-muted-foreground text-sm mb-4">
+          <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+          <span>{property.address}</span>
+        </div>
+        <div className="flex justify-between items-center mt-4">
+          <div className="font-display text-lg font-medium flex items-center">
+            <EuroIcon className="w-5 h-5 mr-1" />
+            {formatPrice(property.price)}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <section className="section-padding bg-muted/30 w-full overflow-hidden">
+    <section id="rentals" className="section-padding bg-white w-full overflow-hidden">
       <div className="container mx-auto px-0 sm:px-4">
         <div className="text-center mb-16 max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-display font-semibold mb-4">Our Portfolio</h2>
+          <h2 className="text-3xl md:text-4xl font-display font-semibold mb-4">Rentals</h2>
           <p className="text-muted-foreground">
-            Explore our newest properties for sale that have just been added to our exclusive collection
+            Browse our exclusive selection of premium properties for rent in Mallorca's most sought-after locations
           </p>
         </div>
-
+        
         <div className="mb-12">
-          <div className="flex justify-end mb-8">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-              className="flex items-center gap-1"
-            >
-              {sortDirection === 'asc' ? <ArrowUpAZ className="w-4 h-4" /> : <ArrowDownAZ className="w-4 h-4" />}
-              <span>Sort by Rent Time</span>
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-            {filteredProperties.map(property => (
-              <Card key={property.id} className="cursor-pointer" onClick={() => handlePropertyClick(property)}>
-                <div className="relative">
-                  <div className="image-loading h-60 relative">
-                    <img
-                      src={property.rentals_images[0].image}
-                      alt={property.name}
-                      className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
-                      onLoad={() => handleImageLoad(property.id)}
-                    />
-                  </div>
-                  {!userStore.isAuth && (
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <Lock className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="font-medium text-lg">{property.name}</h3>
-                  <div className="flex items-center text-muted-foreground text-sm mb-4">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    <span>{property.address}</span>
-                  </div>
-                  <div className="font-display text-lg font-medium flex items-center">
-                    <EuroIcon className="w-5 h-5 mr-1" />
-                    {property.price.toLocaleString('de-DE')}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Tabs defaultValue="all" className="w-full" onValueChange={setSelectedRentTime}>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-6">
+              <div className="flex items-center gap-2 bg-secondary rounded-lg p-2 w-full md:w-auto">
+                <button
+                  onClick={() => setSelectedRentTime("all")}
+                  className={`px-3 py-1.5 rounded-md text-xs md:text-sm font-medium transition-colors flex-1 md:flex-none ${selectedRentTime === "all" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
+                >
+                  All
+                </button>
+                {rentTimes.map(rt => (
+                  <button
+                    key={rt.id}
+                    onClick={() => setSelectedRentTime(rt.id.toString())}
+                    className={`px-3 py-1.5 rounded-md text-xs md:text-sm font-medium transition-colors flex-1 md:flex-none ${selectedRentTime === rt.id.toString() ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
+                  >
+                    <CalendarDays className="w-5 h-5 mr-1" />
+                    {rt.name}
+                  </button>
+                ))}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                className="flex items-center gap-1 w-full md:w-auto"
+              >
+                {sortDirection === 'asc' ? (
+                  <>
+                    <ArrowUpAZ className="w-4 h-4" />
+                    <span>Price: Low to High</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowDownAZ className="w-4 h-4" />
+                    <span>Price: High to Low</span>
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <TabsContent value="all" className="mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+                {filteredProperties.map(renderPropertyCard)}
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
+        
+        {/* Если пользователь не авторизован, предлагаем зарегистрироваться */}
+        {!userStore.isAuth && (
+          <div className="mt-12 text-center">
+            <div className="max-w-xl mx-auto rounded-lg overflow-hidden relative animate-gradient-slow" style={{
+              background: "linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)",
+              backgroundSize: "200% 200%"
+            }}>
+              <div className="p-8">
+                <h3 className="text-xl font-display font-medium mb-2">See More Properties</h3>
+                <p className="text-muted-foreground mb-4">
+                  Create an account to access our full portfolio of exclusive properties
+                </p>
+                <Button onClick={() => openAuthDialog && openAuthDialog("register")} className="mt-2 transition-all duration-500 hover:scale-105 hover:shadow-lg hover:shadow-amber-200/20 group" size="lg">
+                  <span className="group-hover:mr-1 transition-all duration-300">Sign up</span>
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
+      
       <PropertyDetailsDialog property={selectedProperty} open={propertyDialogOpen} onOpenChange={setPropertyDialogOpen} />
     </section>
   );

@@ -57,6 +57,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const handlePropertyClick = (property: any) => {
+    console.log(property);
     setSelectedProperty(property);
     setPropertyDialogOpen(true);
   };

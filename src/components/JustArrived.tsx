@@ -2,14 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import {
   ArrowDownAZ,
   ArrowUpAZ,
-  Building,
-  Home,
-  MapPin,
-  EuroIcon,
-  Bed,
-  Bath,
-  Lock,
-  ArrowRight
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,37 +15,37 @@ interface JustArrivedProps {
 }
 
 export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
-  const [propertyType, setPropertyType] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string | 'all'>("all");
+  const [categories, setCategories] = useState<any[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
 
-  // По-прежнему получаем функции для получения данных из useAuth,
-  // но проверка авторизации будет идти через userStore
   const { getFeaturedJustArrivedListings } = useAuth();
   const { rentTimeStore, userStore } = useContext(Context)!;
 
   useEffect(() => {
     async function loadProperties() {
       let properties: any[] = [];
-      // Загружаем данные с сервера через стор
+      // Загружаем данные с сервера через store
       await rentTimeStore.loadRentalsByStatus('our portfolio');
       properties = rentTimeStore.rentals;
 
-      // Фильтрация по типу недвижимости, если выбрано не "all"
+      // Формируем массив уникальных категорий
+      const uniqueCategoriesMap: { [key: string]: any } = {};
+      properties.forEach(property => {
+        if (property.category && !uniqueCategoriesMap[property.category.id]) {
+          uniqueCategoriesMap[property.category.id] = property.category;
+        }
+      });
+      setCategories(Object.values(uniqueCategoriesMap));
+
+      // Фильтрация по выбранной категории, если выбрана не "all"
       let result = [...properties];
-      if (propertyType !== "all") {
-        result = result.filter(property => {
-          if (propertyType === "villas")
-            return property.type === "villa" || property.type === "finca";
-          if (propertyType === "apartments")
-            return property.type === "apartment" || property.type === "building";
-          if (propertyType === "plots")
-            return property.type === "plot" || property.type === "project";
-          return true;
-        });
+      if (selectedCategory !== "all") {
+        result = result.filter(property => property.category?.id === selectedCategory);
       }
 
       // Сортировка по цене
@@ -63,7 +56,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       setFilteredProperties(result);
     }
     loadProperties();
-  }, [propertyType, sortDirection, rentTimeStore]);
+  }, [selectedCategory, sortDirection, rentTimeStore]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({
@@ -77,8 +70,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const handlePropertyClick = (property: any) => {
-    console.log('Clicked property:', property);
-    // Проверка авторизации через userStore
     if (!userStore.isAuth && openAuthDialog) {
       openAuthDialog("register");
       return;
@@ -88,16 +79,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const renderPropertyCard = (property: any) => {
-    // Поиск кастомных полей для Bedrooms/Bathrooms
-    const bedroomsField = property.rental_custom_data?.find((item: any) => {
-      const name = item.categories_datum.name.toLowerCase();
-      return name.includes("bed") && !name.includes("bath");
-    });
-    const bathroomsField = property.rental_custom_data?.find((item: any) => {
-      const name = item.categories_datum.name.toLowerCase();
-      return name.includes("bath");
-    });
-
     return (
       <Card
         key={property.id}
@@ -122,7 +103,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
               />
             )}
           </div>
-          {/* Если пользователь не авторизован, показываем плашку */}
           {!userStore.isAuth && (
             <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
               <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
@@ -137,31 +117,12 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
             <h3 className="font-medium text-lg property-card-title">{property.name}</h3>
           </div>
           <div className="flex items-center text-muted-foreground text-sm mb-4 property-card-location">
-            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
             <span>{property.address}</span>
           </div>
           <div className="flex justify-between items-center mt-4">
-            <div className="font-display text-lg font-medium flex items-center">
-              <EuroIcon className="w-5 h-5 mr-1 flex-shrink-0" />
+            <div className="font-display text-lg font-medium">
               {formatPrice(property.price)}
             </div>
-            {(bedroomsField || bathroomsField) && (
-              <div className="text-sm text-muted-foreground flex items-center space-x-2">
-                {bedroomsField && (
-                  <div className="flex items-center">
-                    <Bed className="w-4 h-4 mr-1 flex-shrink-0" />
-                    <span>{bedroomsField.value}</span>
-                  </div>
-                )}
-                {bedroomsField && bathroomsField && <span>·</span>}
-                {bathroomsField && (
-                  <div className="flex items-center">
-                    <Bath className="w-4 h-4 mr-1 flex-shrink-0" />
-                    <span>{bathroomsField.value}</span>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -180,41 +141,29 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
 
         <div className="mb-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-6">
+            {/* Список категорий */}
             <div className="flex flex-wrap items-center gap-2 bg-secondary rounded-lg p-2 w-full md:w-auto">
+              {/* Кнопка "All" */}
               <button
-                onClick={() => setPropertyType("all")}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "all" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
+                onClick={() => setSelectedCategory("all")}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${selectedCategory === "all" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
               >
                 All
               </button>
-              <button
-                onClick={() => setPropertyType("villas")}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "villas" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
-              >
-                <Home className="inline-block w-4 h-4 mr-1" />
-                Houses
-              </button>
-              <button
-                onClick={() => setPropertyType("apartments")}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "apartments" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
-              >
-                <Building className="inline-block w-4 h-4 mr-1" />
-                Flats
-              </button>
-              <button
-                onClick={() => setPropertyType("buildings")}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "buildings" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
-              >
-                <Building className="inline-block w-4 h-4 mr-1" />
-                Buildings
-              </button>
-              <button
-                onClick={() => setPropertyType("plots")}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${propertyType === "plots" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
-              >
-                <MapPin className="inline-block w-4 h-4 mr-1" />
-                Plots
-              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${selectedCategory === cat.id ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
+                >
+                  <img
+                    src={`${import.meta.env.VITE_SERVER_URL}${cat.icon}`}
+                    alt={cat.name}
+                    className="inline-block w-4 h-4 mr-1"
+                  />
+                  {cat.name}
+                </button>
+              ))}
             </div>
 
             <Button

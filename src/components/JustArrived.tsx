@@ -39,6 +39,9 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       await rentTimeStore.loadRentalsByStatus('our portfolio');
       properties = rentTimeStore.rentals;
 
+      // Фильтруем по статусу featured = true
+      properties = properties.filter(property => property.featured === true);
+
       // Формируем массив уникальных категорий
       const uniqueCategoriesMap: { [key: string]: any } = {};
       properties.forEach(property => {
@@ -76,7 +79,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const handlePropertyClick = (property: any) => {
-    // Проверка авторизации через userStore
     if (!userStore.isAuth && openAuthDialog) {
       openAuthDialog("register");
       return;
@@ -86,7 +88,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const renderPropertyCard = (property: any) => {
-    // Поиск кастомных полей для Bedrooms/Bathrooms
     const bedroomsField = property.rental_custom_data?.find((item: any) => {
       const name = item.categories_datum.name.toLowerCase();
       return name.includes("bed") && !name.includes("bath");
@@ -120,7 +121,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
               />
             )}
           </div>
-          {/* Если пользователь не авторизован, показываем плашку */}
           {!userStore.isAuth && (
             <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
               <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
@@ -180,7 +180,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-6">
             {/* Список категорий */}
             <div className="flex flex-wrap items-center gap-2 bg-secondary rounded-lg p-2 w-full md:w-auto">
-              {/* Кнопка "All" */}
               <button
                 onClick={() => setSelectedCategory("all")}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${selectedCategory === "all" ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
@@ -195,7 +194,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
                     selectedCategory === cat.id ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"
                   }`}
                 >
-                  {/* Если категория выбрана, применяем filter для изменения цвета иконки */}
                   <img
                     src={`${import.meta.env.VITE_SERVER_URL}${cat.icon}`}
                     alt={cat.name}

@@ -13,10 +13,9 @@ import {
   MapPin, 
   Euro, 
   Bed, 
-  Bath, 
+  Users, 
   ArrowRight, 
-  Lock, 
-  Maximize2
+  Lock 
 } from 'lucide-react';
 import {
   Carousel,
@@ -27,17 +26,28 @@ import {
 } from '@/components/ui/carousel';
 import { Context } from '@/main';
 
+// Обновленный интерфейс, чтобы соответствовать JSON-данным
+interface RentalCustomData {
+  id: number;
+  value: string;
+  categories_datum: {
+    id: number;
+    name: string;
+    type: string;
+  };
+}
+
 interface BaseItemProps {
   id: number;
-  title: string;
-  type: string;
-  location: string;
+  name: string;
+  description: string;
+  address: string;
   price: number;
-  image: string;
-  images?: string[];
-  category: string;
-  description?: string;
-  pricePeriod?: string;
+  unit_of_numeration: string;
+  category: { id: number; name: string };
+  rent_time: { id: number; name: string };
+  rentals_images: { id: number; image: string }[];
+  rental_custom_data: RentalCustomData[];
 }
 
 interface PropertyDetailsDialogProps {
@@ -54,17 +64,11 @@ function PropertyDetailsDialog({
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { userStore } = useContext(Context);
   const isAuthenticated = userStore.isAuth;
-  const user = userStore.user;
 
-  // Если property не задан, ничего не рендерим
   if (!property) return null;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
-  };
-
-  const handleMaybeLater = () => {
-    onOpenChange(false);
   };
 
   const handleSignIn = () => {
@@ -72,54 +76,22 @@ function PropertyDetailsDialog({
     setAuthDialogOpen(true);
   };
 
-  // Используем все изображения или просто основное
-  const allImages = property.images && property.images.length ? property.images : [property.image];
+  const allImages = property.rentals_images.length
+    ? property.rentals_images.map(img => img.image)
+    : ["/default-image.jpg"];
 
-  // Если пользователь не авторизован – показываем окно с кнопками входа/регистрации
-  if (!isAuthenticated) {
-    return (
-      <>
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="sm:max-w-[425px] backdrop-blur-lg bg-background/95">
-            <DialogHeader>
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Lock className="h-8 w-8 text-primary" />
-              </div>
-              <DialogTitle className="text-xl font-display text-center">Members Only</DialogTitle>
-              <DialogDescription className="text-center">
-                Sign in or register to view exclusive details and make reservations
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 pt-4 pb-2">
-              <Button onClick={handleSignIn} className="w-full">
-                Sign in or Register
-              </Button>
-              <Button variant="outline" onClick={handleMaybeLater} className="w-full">
-                Maybe Later
-              </Button>
-              <p className="text-xs text-center text-muted-foreground pt-2">
-                Access to details is exclusive to our registered members.
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
-        <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
-      </>
-    );
-  }
-
-  // Если пользователь авторизован, продолжаем рендерить детали объекта
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-display">{property.title}</DialogTitle>
+          <DialogTitle className="text-xl font-display">{property.name}</DialogTitle>
           <DialogDescription className="flex items-center text-muted-foreground">
             <MapPin className="w-4 h-4 mr-1" />
-            {property.location}
+            {property.address}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {/* Карусель изображений */}
           <Carousel className="w-full">
             <CarouselContent>
               {allImages.map((image, index) => (
@@ -127,7 +99,7 @@ function PropertyDetailsDialog({
                   <div className="aspect-video rounded-md overflow-hidden">
                     <img 
                       src={image} 
-                      alt={`${property.title} - image ${index + 1}`}
+                      alt={`${property.name} - image ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -135,23 +107,39 @@ function PropertyDetailsDialog({
               ))}
             </CarouselContent>
             <div className="flex justify-end gap-2 mt-2">
-              <CarouselPrevious className="relative static translate-y-0 left-0" />
-              <CarouselNext className="relative static translate-y-0 right-0" />
+              <CarouselPrevious />
+              <CarouselNext />
             </div>
           </Carousel>
-          <div className="grid grid-cols-3 gap-4">
+
+          {/* Блок информации */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Цена */}
             <div className="bg-secondary rounded-md p-3 text-center">
               <div className="text-sm text-muted-foreground">Price</div>
               <div className="font-display font-medium flex items-center justify-center mt-1">
                 <Euro className="w-4 h-4 mr-1" />
                 {formatPrice(property.price)}
-                {property.pricePeriod && (
-                  <span className="text-xs ml-1">/{property.pricePeriod}</span>
-                )}
+                <span className="text-xs ml-1">/{property.unit_of_numeration.replace(/"/g, '')}</span>
               </div>
             </div>
-            {/* Здесь можно добавить другие детали, если они есть */}
+
+            {/* Доступность и другие параметры */}
+            {property.rental_custom_data.map((item) => (
+              <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
+                <div className="text-sm text-muted-foreground">{item.categories_datum.name}</div>
+                <div className="font-display font-medium flex items-center justify-center mt-1">
+                  {item.categories_datum.name === "Peoples" ? (
+                    <Users className="w-4 h-4 mr-1" />
+                  ) : item.categories_datum.name === "Beds" ? (
+                    <Bed className="w-4 h-4 mr-1" />
+                  ) : null}
+                  {item.value}
+                </div>
+              </div>
+            ))}
           </div>
+
           <div>
             <h4 className="font-medium mb-2">About this property</h4>
             <p className="text-muted-foreground text-sm">{property.description}</p>

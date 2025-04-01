@@ -24,7 +24,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
     async function loadProperties() {
       let properties: any[] = [];
       // Загружаем данные с сервера через store
-      await rentTimeStore.loadRentalsByStatus('our portfolio');
+      await rentTimeStore.loadRentalsByStatus('leisure');
       properties = rentTimeStore.rentals;
 
       // Фильтруем по статусу featured = true

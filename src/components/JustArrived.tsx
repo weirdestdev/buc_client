@@ -2,6 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import {
   ArrowDownAZ,
   ArrowUpAZ,
+  Building,
+  Home,
+  MapPin,
+  EuroIcon,
+  Bed,
+  Bath,
   Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,7 +48,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       });
       setCategories(Object.values(uniqueCategoriesMap));
 
-      // Фильтрация по выбранной категории, если выбрана не "all"
+      // Фильтрация по выбранной категории (если не выбрано "all")
       let result = [...properties];
       if (selectedCategory !== "all") {
         result = result.filter(property => property.category?.id === selectedCategory);
@@ -70,6 +76,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const handlePropertyClick = (property: any) => {
+    // Проверка авторизации через userStore
     if (!userStore.isAuth && openAuthDialog) {
       openAuthDialog("register");
       return;
@@ -79,6 +86,16 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const renderPropertyCard = (property: any) => {
+    // Поиск кастомных полей для Bedrooms/Bathrooms
+    const bedroomsField = property.rental_custom_data?.find((item: any) => {
+      const name = item.categories_datum.name.toLowerCase();
+      return name.includes("bed") && !name.includes("bath");
+    });
+    const bathroomsField = property.rental_custom_data?.find((item: any) => {
+      const name = item.categories_datum.name.toLowerCase();
+      return name.includes("bath");
+    });
+
     return (
       <Card
         key={property.id}
@@ -103,6 +120,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
               />
             )}
           </div>
+          {/* Если пользователь не авторизован, показываем плашку */}
           {!userStore.isAuth && (
             <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
               <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
@@ -117,12 +135,31 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
             <h3 className="font-medium text-lg property-card-title">{property.name}</h3>
           </div>
           <div className="flex items-center text-muted-foreground text-sm mb-4 property-card-location">
+            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
             <span>{property.address}</span>
           </div>
           <div className="flex justify-between items-center mt-4">
-            <div className="font-display text-lg font-medium">
+            <div className="font-display text-lg font-medium flex items-center">
+              <EuroIcon className="w-5 h-5 mr-1 flex-shrink-0" />
               {formatPrice(property.price)}
             </div>
+            {(bedroomsField || bathroomsField) && (
+              <div className="text-sm text-muted-foreground flex items-center space-x-2">
+                {bedroomsField && (
+                  <div className="flex items-center">
+                    <Bed className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span>{bedroomsField.value}</span>
+                  </div>
+                )}
+                {bedroomsField && bathroomsField && <span>·</span>}
+                {bathroomsField && (
+                  <div className="flex items-center">
+                    <Bath className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span>{bathroomsField.value}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -154,12 +191,20 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${selectedCategory === cat.id ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${
+                    selectedCategory === cat.id ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"
+                  }`}
                 >
+                  {/* Если категория выбрана, применяем filter для изменения цвета иконки */}
                   <img
                     src={`${import.meta.env.VITE_SERVER_URL}${cat.icon}`}
                     alt={cat.name}
                     className="inline-block w-4 h-4 mr-1"
+                    style={
+                      selectedCategory === cat.id
+                        ? { filter: 'brightness(0) invert(1)' }
+                        : {}
+                    }
                   />
                   {cat.name}
                 </button>

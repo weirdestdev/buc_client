@@ -108,10 +108,11 @@ function PropertyDetailsDialog({
             </CarouselContent>
             <div className="flex items-center w-full mt-2 justify-end relative">
               <CarouselPrevious
-                className="mr-1"
+                className="mr-1 relative"
                 style={{ transform: 'translate(0, 0)', left: '0px', top: '0px' }}
               />
               <CarouselNext
+                className="relative"
                 style={{ transform: 'translate(0, 0)', right: '0px', top: '0px' }}
               />
             </div>

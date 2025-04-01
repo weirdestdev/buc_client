@@ -106,8 +106,9 @@ function PropertyDetailsDialog({
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <div className="flex justify-end gap-2 mt-2">
-              <CarouselPrevious />
+            {/* Стрелки слайдера располагаем под картинками, прижатыми к правой стороне */}
+            <div className="flex items-center w-full mt-2 justify-end">
+              <CarouselPrevious className="mr-1" />
               <CarouselNext />
             </div>
           </Carousel>
@@ -120,7 +121,7 @@ function PropertyDetailsDialog({
               <div className="font-display font-medium flex items-center justify-center mt-1">
                 <Euro className="w-4 h-4 mr-1" />
                 {formatPrice(property.price)}
-                <span className="text-xs ml-1">/{property.unit_of_numeration.replace(/"/g, '')}</span>
+                <span className="text-xs ml-1">{property.unit_of_numeration.replace(/"/g, '')}</span>
               </div>
             </div>
 

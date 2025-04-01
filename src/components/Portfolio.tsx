@@ -26,7 +26,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
     async function loadData() {
       // Загружаем все времена аренды и все объявления (rentals)
       await rentTimeStore.loadRentTimes();
-      await rentTimeStore.loadRentals();
+      await rentTimeStore.loadRentalsByStatus('rentals');
       setRentTimes(rentTimeStore.rentTimes);
 
       let rentals = [...rentTimeStore.rentals];
@@ -71,7 +71,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
     >
       <div className="image-loading h-60 relative">
         <img 
-          src={property.images && property.images.length > 0 ? property.images[0] : '/fallback-image.jpg'} 
+          src={property.rentals_images[0].image || '/fallback-image.jpg'} 
           alt={property.name} 
           className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
           onLoad={() => handleImageLoad(property.id)} 

@@ -1,21 +1,21 @@
 import React, { useContext, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
   DialogTitle,
-  DialogDescription 
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import AuthDialog from '@/components/AuthDialog';
-import { 
-  MapPin, 
-  Euro, 
-  Bed, 
-  Users, 
-  ArrowRight, 
-  Lock 
+import {
+  MapPin,
+  Euro,
+  Bed,
+  Users,
+  ArrowRight,
+  Lock
 } from 'lucide-react';
 import {
   Carousel,
@@ -56,10 +56,10 @@ interface PropertyDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function PropertyDetailsDialog({ 
-  property, 
-  open, 
-  onOpenChange 
+function PropertyDetailsDialog({
+  property,
+  open,
+  onOpenChange
 }: PropertyDetailsDialogProps) {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { userStore } = useContext(Context);
@@ -97,8 +97,8 @@ function PropertyDetailsDialog({
               {allImages.map((image, index) => (
                 <CarouselItem key={index}>
                   <div className="aspect-video rounded-md overflow-hidden">
-                    <img 
-                      src={image} 
+                    <img
+                      src={image}
                       alt={`${property.name} - image ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -106,10 +106,14 @@ function PropertyDetailsDialog({
                 </CarouselItem>
               ))}
             </CarouselContent>
-            {/* Стрелки слайдера располагаем под картинками, прижатыми к правой стороне */}
-            <div className="flex items-center w-full mt-2 justify-end">
-              <CarouselPrevious className="mr-1" />
-              <CarouselNext />
+            <div className="flex items-center w-full mt-2 justify-end relative">
+              <CarouselPrevious
+                className="mr-1"
+                style={{ transform: 'translate(0, 0)', left: '0px', top: '0px' }}
+              />
+              <CarouselNext
+                style={{ transform: 'translate(0, 0)', right: '0px', top: '0px' }}
+              />
             </div>
           </Carousel>
 
@@ -121,7 +125,6 @@ function PropertyDetailsDialog({
               <div className="font-display font-medium flex items-center justify-center mt-1">
                 <Euro className="w-4 h-4 mr-1" />
                 {formatPrice(property.price)}
-                <span className="text-xs ml-1">{property.unit_of_numeration.replace(/"/g, '')}</span>
               </div>
             </div>
 

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
+import PropertyDetailsDialog from '@/components/PropertyDetailsDialogTwo';
 import { useAuth } from '@/context/AuthContext';
 import { Context } from '@/main';
 

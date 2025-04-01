@@ -63,45 +63,83 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
     return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
   };
 
-  const renderPropertyCard = (property: any) => (
-    <Card
-      key={property.id}
-      className="w-full overflow-hidden group hover-lift prevent-screenshot cursor-pointer"
-      onClick={() => handlePropertyClick(property)}
-    >
-      <div className="image-loading h-60 relative">
-        <img 
-          src={property.rentals_images[0].image || '/fallback-image.jpg'} 
-          alt={property.name} 
-          className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`} 
-          onLoad={() => handleImageLoad(property.id)} 
-        />
-        {userStore.user?.status !== 'approved' && (
-          <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
-            <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
-              <Lock className="w-4 h-4 text-primary mr-2" />
-              <span className="text-xs font-medium">Members Only</span>
+  const renderPropertyCard = (property: any) => {
+    // Находим время аренды по rentTimeId
+    const rentTime = rentTimes.find(rt => rt.id === property.rentTimeId);
+  
+    const bedroomsField = property.rental_custom_data?.find((item: any) => {
+      const name = item.categories_datum.name.toLowerCase();
+      return name.includes("bed") && !name.includes("bath");
+    });
+  
+    const bathroomsField = property.rental_custom_data?.find((item: any) => {
+      const name = item.categories_datum.name.toLowerCase();
+      return name.includes("bath");
+    });
+  
+    return (
+      <Card
+        key={property.id}
+        className="w-full overflow-hidden group hover-lift prevent-screenshot cursor-pointer"
+        onClick={() => handlePropertyClick(property)}
+      >
+        <div className="image-loading h-60 relative">
+          <div className="absolute top-3 right-3 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5">
+            {/* Выводим корректное название времени аренды */}
+            <span>{rentTime ? rentTime.name : 'N/A'}</span>
+          </div>
+          <img
+            src={property.rentals_images[0].image || '/fallback-image.jpg'}
+            alt={property.name}
+            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
+            onLoad={() => handleImageLoad(property.id)}
+          />
+          {userStore.user?.status !== 'approved' && (
+            <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
+              <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
+                <Lock className="w-4 h-4 text-primary mr-2" />
+                <span className="text-xs font-medium">Members Only</span>
+              </div>
             </div>
+          )}
+        </div>
+        <CardContent className="p-6">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="font-medium text-lg">{property.name}</h3>
           </div>
-        )}
-      </div>
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="font-medium text-lg">{property.name}</h3>
-        </div>
-        <div className="flex items-center text-muted-foreground text-sm mb-4">
-          <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-          <span>{property.address}</span>
-        </div>
-        <div className="flex justify-between items-center mt-4">
-          <div className="font-display text-lg font-medium flex items-center">
-            <EuroIcon className="w-5 h-5 mr-1" />
-            {formatPrice(property.price)}
+          <div className="flex items-center text-muted-foreground text-sm mb-4">
+            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+            <span>{property.address}</span>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+          <div className="flex justify-between items-center mt-4">
+            <div className="font-display text-lg font-medium flex items-center">
+              <EuroIcon className="w-5 h-5 mr-1" />
+              {formatPrice(property.price)}
+              <span className="text-sm text-muted-foreground ml-1">/{property.unit_of_numeration}</span>
+            </div>
+            {(bedroomsField || bathroomsField) && (
+              <div className="text-sm text-muted-foreground flex items-center space-x-2">
+                {bedroomsField && (
+                  <div className="flex items-center">
+                    <Bed className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span>{bedroomsField.value}</span>
+                  </div>
+                )}
+                {bedroomsField && bathroomsField && <span>·</span>}
+                {bathroomsField && (
+                  <div className="flex items-center">
+                    <Bath className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span>{bathroomsField.value}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+  
 
   return (
     <section id="rentals" className="section-padding bg-white w-full overflow-hidden">
@@ -112,7 +150,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
             Browse our exclusive selection of premium properties for rent in Mallorca's most sought-after locations
           </p>
         </div>
-        
+
         <div className="mb-12">
           <Tabs defaultValue="all" className="w-full" onValueChange={setSelectedRentTime}>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-6">
@@ -128,14 +166,13 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
                     key={rt.id}
                     onClick={() => setSelectedRentTime(rt.id.toString())}
                     className={`px-3 py-1.5 rounded-md text-xs md:text-sm font-medium transition-colors flex-1 md:flex-none ${selectedRentTime === rt.id.toString() ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
-                    style={{display: "flex", alignItems: "center", gap: "20px"}}
+                    style={{ display: "flex", alignItems: "center" }}
                   >
-                    <CalendarDays className="w-5 h-5 mr-1" />
                     {rt.name}
                   </button>
                 ))}
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -155,7 +192,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
                 )}
               </Button>
             </div>
-            
+
             <TabsContent value="all" className="mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
                 {filteredProperties.map(renderPropertyCard)}
@@ -163,7 +200,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
             </TabsContent>
           </Tabs>
         </div>
-        
+
         {/* Если пользователь не авторизован, предлагаем зарегистрироваться */}
         {!userStore.isAuth && (
           <div className="mt-12 text-center">
@@ -185,7 +222,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
           </div>
         )}
       </div>
-      
+
       <PropertyDetailsDialog property={selectedProperty} open={propertyDialogOpen} onOpenChange={setPropertyDialogOpen} />
     </section>
   );

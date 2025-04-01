@@ -28,7 +28,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
       await rentTimeStore.loadRentTimes();
       await rentTimeStore.loadRentalsByStatus('rentals');
       setRentTimes(rentTimeStore.rentTimes);
-
+  
       let rentals = [...rentTimeStore.rentals];
       // Если выбрано конкретное время аренды, фильтруем по rentTimeId
       if (selectedRentTime !== "all") {
@@ -40,11 +40,15 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
           ? a.price - b.price
           : b.price - a.price
       );
-
+  
+      // Фильтрация: оставляем только featured объявления
+      rentals = rentals.filter(rental => rental.featured);
+  
       setFilteredProperties(rentals);
     }
     loadData();
   }, [selectedRentTime, sortDirection, rentTimeStore]);
+  
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));

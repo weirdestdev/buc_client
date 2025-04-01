@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialogThree';
 import { Context } from '@/main';
+import { useLocation } from 'react-router-dom';
 
 interface RentalsProps {
   openAuthDialog?: (tab: "login" | "register") => void;
@@ -21,6 +22,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
 
   const { rentTimeStore, userStore } = useContext(Context)!;
+  const location = useLocation();
 
   useEffect(() => {
     async function loadData() {
@@ -41,13 +43,15 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
           : b.price - a.price
       );
   
-      // Фильтрация: оставляем только featured объявления
-      rentals = rentals.filter(rental => rental.featured);
+      // Если не находимся в /member-panel, фильтруем: оставляем только featured объявления
+      if (!location.pathname.includes('/member-panel')) {
+        rentals = rentals.filter(rental => rental.featured);
+      }
   
       setFilteredProperties(rentals);
     }
     loadData();
-  }, [selectedRentTime, sortDirection, rentTimeStore]);
+  }, [selectedRentTime, sortDirection, rentTimeStore, location.pathname]);
   
 
   const handleImageLoad = (id: number) => {

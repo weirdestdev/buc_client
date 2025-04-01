@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   ArrowDownAZ,
   ArrowUpAZ,
@@ -21,6 +22,7 @@ interface JustArrivedProps {
 }
 
 export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
+  const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>("all");
   const [categories, setCategories] = useState<any[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
@@ -34,16 +36,17 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
 
   useEffect(() => {
     async function loadProperties() {
-      let properties: any[] = [];
-      // Загружаем данные с сервера через store
+      let properties = [];
       await rentTimeStore.loadRentalsByStatus('our portfolio');
       properties = rentTimeStore.rentals;
 
-      // Фильтруем по статусу featured = true
-      properties = properties.filter(property => property.featured === true);
+      // Если не находимся в /member-panel, фильтруем по featured = true
+      if (!location.pathname.includes('/member-panel')) {
+        properties = properties.filter(property => property.featured === true);
+      }
 
       // Формируем массив уникальных категорий
-      const uniqueCategoriesMap: { [key: string]: any } = {};
+      const uniqueCategoriesMap = {};
       properties.forEach(property => {
         if (property.category && !uniqueCategoriesMap[property.category.id]) {
           uniqueCategoriesMap[property.category.id] = property.category;
@@ -65,7 +68,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       setFilteredProperties(result);
     }
     loadProperties();
-  }, [selectedCategory, sortDirection, rentTimeStore]);
+  }, [selectedCategory, sortDirection, rentTimeStore, location.pathname]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({
@@ -190,9 +193,8 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${
-                    selectedCategory === cat.id ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"
-                  }`}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${selectedCategory === cat.id ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"
+                    }`}
                 >
                   <img
                     src={`${import.meta.env.VITE_SERVER_URL}${cat.icon}`}

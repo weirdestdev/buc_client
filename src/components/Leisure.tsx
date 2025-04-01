@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, ArrowRight, Lock, Bold } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -11,6 +12,7 @@ interface RentalsProps {
 }
 
 export default function Leisure({ openAuthDialog }: RentalsProps) {
+  const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>("all");
   const [categories, setCategories] = useState<any[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
@@ -22,38 +24,40 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
 
   useEffect(() => {
     async function loadProperties() {
-      let properties: any[] = [];
+      let properties = [];
       // Загружаем данные с сервера через store
       await rentTimeStore.loadRentalsByStatus('leisure');
       properties = rentTimeStore.rentals;
-
-      // Фильтруем по статусу featured = true
-      properties = properties.filter(property => property.featured === true);
-
+      
+      // Если не находимся в /member-panel, фильтруем по featured = true
+      if (!location.pathname.includes('/member-panel')) {
+        properties = properties.filter(property => property.featured === true);
+      }
+      
       // Формируем массив уникальных категорий
-      const uniqueCategoriesMap: { [key: string]: any } = {};
+      const uniqueCategoriesMap = {};
       properties.forEach(property => {
         if (property.category && !uniqueCategoriesMap[property.category.id]) {
           uniqueCategoriesMap[property.category.id] = property.category;
         }
       });
       setCategories(Object.values(uniqueCategoriesMap));
-
+      
       // Фильтрация по выбранной категории (если не выбрано "all")
       let result = [...properties];
       if (selectedCategory !== "all") {
         result = result.filter(property => property.category?.id === selectedCategory);
       }
-
+      
       // Сортировка по цене
       result.sort((a, b) =>
         sortDirection === 'asc' ? a.price - b.price : b.price - a.price
       );
-
+      
       setFilteredProperties(result);
     }
     loadProperties();
-  }, [selectedCategory, sortDirection, rentTimeStore]);
+  }, [selectedCategory, sortDirection, rentTimeStore, location.pathname]);  
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));

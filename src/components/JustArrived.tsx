@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/context/AuthContext';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialog';
+import { useAuth } from '@/context/AuthContext';
 import { Context } from '@/main';
 
 interface JustArrivedProps {
@@ -29,13 +29,15 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
 
-  const { isAuthenticated, getFeaturedJustArrivedListings } = useAuth();
+  // По-прежнему получаем функции для получения данных из useAuth,
+  // но проверка авторизации будет идти через userStore
+  const { getFeaturedJustArrivedListings } = useAuth();
   const { rentTimeStore, userStore } = useContext(Context)!;
 
   useEffect(() => {
     async function loadProperties() {
       let properties: any[] = [];
-      // Загружаем данные с сервера
+      // Загружаем данные с сервера через стор
       await rentTimeStore.loadRentalsByStatus('our portfolio');
       properties = rentTimeStore.rentals;
 
@@ -43,9 +45,12 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       let result = [...properties];
       if (propertyType !== "all") {
         result = result.filter(property => {
-          if (propertyType === "villas") return property.type === "villa" || property.type === "finca";
-          if (propertyType === "apartments") return property.type === "apartment" || property.type === "building";
-          if (propertyType === "plots") return property.type === "plot" || property.type === "project";
+          if (propertyType === "villas")
+            return property.type === "villa" || property.type === "finca";
+          if (propertyType === "apartments")
+            return property.type === "apartment" || property.type === "building";
+          if (propertyType === "plots")
+            return property.type === "plot" || property.type === "project";
           return true;
         });
       }
@@ -58,7 +63,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       setFilteredProperties(result);
     }
     loadProperties();
-  }, [propertyType, sortDirection, isAuthenticated, rentTimeStore]);
+  }, [propertyType, sortDirection, rentTimeStore]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({
@@ -73,8 +78,8 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
 
   const handlePropertyClick = (property: any) => {
     console.log('Clicked property:', property);
-    // Если пользователь не авторизован, сразу вызываем окно регистрации
-    if (!isAuthenticated && openAuthDialog) {
+    // Проверка авторизации через userStore
+    if (!userStore.isAuth && openAuthDialog) {
       openAuthDialog("register");
       return;
     }
@@ -118,7 +123,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
             )}
           </div>
           {/* Если пользователь не авторизован, показываем плашку */}
-          {!isAuthenticated && (
+          {!userStore.isAuth && (
             <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
               <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
                 <Lock className="w-4 h-4 text-primary mr-2" />

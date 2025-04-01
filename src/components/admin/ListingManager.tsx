@@ -174,11 +174,13 @@ const ListingManager = observer(() => {
     }));
     form.append('customData', JSON.stringify(customDataArray));
 
-    fileFields.forEach((file) => {
-      if (file) {
-        form.append('images', file);
-      }
-    });
+    if (fileFields.length > 0 && fileFields.some(file => file !== null)) {
+      fileFields.forEach((file) => {
+        if (file) {
+          form.append('images', file);
+        }
+      });
+    }    
 
     if (editingListing) {
       await rentTimeStore.updateRental(editingListing.id, form);

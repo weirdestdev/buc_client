@@ -20,7 +20,7 @@ export default function Portfolio({ openAuthDialog }: PortfolioProps) {
 
   useEffect(() => {
     async function loadProperties() {
-      await rentTimeStore.loadRentalsByStatus('our portfolio');
+      await rentTimeStore.loadRentalsByStatus('rentals');
       let properties = rentTimeStore.rentals;
 
       // Фильтрация по featured
@@ -83,7 +83,7 @@ export default function Portfolio({ openAuthDialog }: PortfolioProps) {
                 <div className="relative">
                   <div className="image-loading h-60 relative">
                     <img
-                      src={property.images?.[0] || '/fallback-image.jpg'}
+                      src={property.rentals_images[0].image}
                       alt={property.name}
                       className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
                       onLoad={() => handleImageLoad(property.id)}

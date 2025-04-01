@@ -3,7 +3,7 @@ import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, Arro
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import PropertyDetailsDialog from '@/components/PropertyDetailsDialogTwo';
+import PropertyDetailsDialog from '@/components/PropertyDetailsDialogThree';
 import { Context } from '@/main';
 
 interface RentalsProps {

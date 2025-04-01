@@ -124,9 +124,6 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
           title: "Logged in",
           description: "Welcome back to Business Unit Club.",
         });
-        setTimeout(() => {
-          onOpenChange(false);
-        }, 1000);
       })
       .catch((error: any) => {
         // Значение по умолчанию
@@ -145,7 +142,11 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
           description: message,
           variant: "destructive",
         });
-      })
+      }).finally(() => {
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 2000);
+      });
   };
 
   // Handle registration submission

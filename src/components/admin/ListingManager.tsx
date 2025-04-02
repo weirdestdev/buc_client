@@ -243,13 +243,15 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Сохранение объявления с отображением загрузки
+  // Сохранение объявления с немедленным закрытием диалога
   const handleSaveListing = async () => {
     if (!formData.name || !formData.price) {
       alert("Введите обязательные поля: Title и Price");
       return;
     }
   
+    // Закрываем диалог сразу, чтобы пользователь не мог повторно нажимать
+    setIsDialogOpen(false);
     setIsLoading(true);
   
     try {
@@ -305,7 +307,6 @@ const ListingManager = observer(() => {
         await rentTimeStore.addRental(form);
       }
       await rentTimeStore.loadRentals();
-      setIsDialogOpen(false);
       setFileFields([]);
     } catch (error) {
       console.error("Ошибка создания объявления:", error);

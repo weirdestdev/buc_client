@@ -234,7 +234,7 @@ const ListingManager = observer(() => {
                 onChange={(e) =>
                   setCustomFieldsValues({ ...customFieldsValues, [field.id]: e.target.value })
                 }
-                onWheelCapture={(e) => e.preventDefault()}
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
                 placeholder={`Enter ${field.name}`}
               />
             </div>
@@ -467,7 +467,7 @@ const ListingManager = observer(() => {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Listing Title"
-                onWheelCapture={(e) => e.preventDefault()}
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
                 required
               />
             </div>
@@ -479,7 +479,7 @@ const ListingManager = observer(() => {
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="Location"
-                onWheelCapture={(e) => e.preventDefault()}
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
                 required
               />
             </div>
@@ -492,7 +492,7 @@ const ListingManager = observer(() => {
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 placeholder="Price"
-                onWheelCapture={(e) => e.preventDefault()}
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
                 required
               />
             </div>
@@ -505,7 +505,7 @@ const ListingManager = observer(() => {
                   value={formData.unit_of_numeration}
                   onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
                   placeholder="Price Period (e.g. Month, Week, Day)"
-                  onWheelCapture={(e) => e.preventDefault()}
+                  onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
                 />
               </div>
             )}
@@ -517,7 +517,7 @@ const ListingManager = observer(() => {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Description"
-                onWheelCapture={(e) => e.preventDefault()}
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
               />
             </div>
             {/* Селекты для Primary Category, Category */}
@@ -583,7 +583,7 @@ const ListingManager = observer(() => {
                     type="file"
                     multiple
                     onChange={(e) => handleFileFieldChange(e, index)}
-                    onWheelCapture={(e) => e.preventDefault()}
+                    onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
                   />
                   {file && (
                     <img

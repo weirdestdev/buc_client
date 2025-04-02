@@ -61,10 +61,8 @@ const ListingManager = observer(() => {
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
 
-  // Состояния для управления существующими изображениями
+  // Состояние для управления миниатюрами (существующими изображениями)
   const [existingImages, setExistingImages] = useState<any[]>([]);
-  // removedImageIds больше не используются, так как мы отправляем обновлённый массив
-  // и уже изменённый порядок формируется в existingImages
 
   useEffect(() => {
     rentTimeStore.loadRentals();
@@ -127,7 +125,7 @@ const ListingManager = observer(() => {
           }, {})
         : {}
     );
-    // Загружаем существующие изображения и сбрасываем новые
+    // Загружаем миниатюры из объявления (существующие изображения)
     setExistingImages(listing.rentals_images || []);
     setFileFields([]);
     setIsDialogOpen(true);
@@ -147,7 +145,7 @@ const ListingManager = observer(() => {
     }
   };
 
-  // Отрисовка существующих изображений с кнопками удаления и изменения порядка
+  // Отрисовка миниатюр с кнопками удаления и изменения порядка
   const renderExistingImages = () => {
     if (existingImages.length === 0) return null;
     return (
@@ -165,7 +163,6 @@ const ListingManager = observer(() => {
               <button
                 type="button"
                 onClick={() => {
-                  // Удаляем изображение из массива, просто фильтруем его
                   setExistingImages(existingImages.filter((img) => img.id !== imgObj.id));
                 }}
                 className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs p-0.5"
@@ -200,7 +197,7 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Обработчик изменения порядка изображений
+  // Обработчик изменения порядка миниатюр
   const moveExistingImage = (from: number, to: number) => {
     const updated = [...existingImages];
     const temp = updated[from];
@@ -209,7 +206,7 @@ const ListingManager = observer(() => {
     setExistingImages(updated);
   };
 
-  // Отрисовка кастомных полей, привязанных к выбранной категории
+  // Отрисовка кастомных полей для выбранной категории
   const renderCustomFields = () => {
     if (!formData.categoryId) return null;
     const selectedCategory = categoriesStore.categories.find(
@@ -245,7 +242,7 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Сохранение объявления с учетом обновленного массива изображений
+  // Сохранение объявления с учетом обновленного массива миниатюр
   const handleSaveListing = async () => {
     if (!formData.name || !formData.price) {
       alert("Введите обязательные поля: Title и Price");
@@ -276,7 +273,7 @@ const ListingManager = observer(() => {
     }));
     form.append('customData', JSON.stringify(customDataArray));
 
-    // Если есть новые файлы, добавляем их
+    // Если пользователь добавил новые файлы, отправляем их
     if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
       fileFields.forEach((file) => {
         if (file) {
@@ -285,12 +282,10 @@ const ListingManager = observer(() => {
       });
     }
 
-    // Вместо отдельных полей отправляем обновленный массив изображений,
-    // содержащий объекты с id и ссылкой на изображение.
-    form.append(
-      'updatedImages',
-      JSON.stringify(existingImages.map((img) => ({ id: img.id, image: img.image })))
-    );
+    // Формируем обновленный массив миниатюр
+    // Каждый объект содержит id и image (URL или локальный путь)
+    const updatedImages = existingImages.map(img => ({ id: img.id, image: img.image }));
+    form.append('updatedImages', JSON.stringify(updatedImages));
 
     if (editingListing) {
       await rentTimeStore.updateRental(editingListing.id, form);

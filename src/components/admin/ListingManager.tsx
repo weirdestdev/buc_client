@@ -243,6 +243,18 @@ const ListingManager = observer(() => {
     );
   };
 
+  // Вычисляем список категорий для селекта в зависимости от значения formData.status
+  const filteredCategories = categoriesStore.categories.filter((cat: any) => {
+    const status = formData.status.toLowerCase();
+    const catName = cat.name.toLowerCase();
+    if (status === 'leisure') {
+      return catName === 'cars' || catName === 'yachts';
+    } else if (status === 'our portfolio' || status === 'rentals') {
+      return catName !== 'cars' && catName !== 'yachts';
+    }
+    return true;
+  });
+
   // Сохранение объявления с немедленным закрытием диалога
   const handleSaveListing = async () => {
     if (!formData.name || !formData.price) {
@@ -526,7 +538,7 @@ const ListingManager = observer(() => {
                 className="border rounded p-2 w-full"
               >
                 <option value="">Select Category</option>
-                {categoriesStore.categories.map((cat: any) => (
+                {filteredCategories.map((cat: any) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>

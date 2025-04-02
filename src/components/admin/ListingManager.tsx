@@ -246,37 +246,39 @@ const ListingManager = observer(() => {
       alert("Введите обязательные поля: Title и Price");
       return;
     }
-
+  
     const form = new FormData();
     form.append('name', formData.name);
     form.append('description', formData.description);
     form.append('address', formData.address);
     form.append('price', formData.price);
-
+  
     const unitValue =
       (formData.status.toLowerCase() === 'rentals' ||
        formData.status.toLowerCase() === 'leisure')
         ? formData.unit_of_numeration
         : null;
     form.append('unit_of_numeration', JSON.stringify(unitValue));
-
+  
     form.append('status', formData.status);
     form.append('featured', JSON.stringify(formData.featured));
     form.append('categoryId', formData.categoryId);
-    // Если выбрана основная категория Our Portfolio или Leisure, отправляем rentTimeId как null
-    const rentTimeValue = (formData.status.toLowerCase() === 'our portfolio' ||
-                           formData.status.toLowerCase() === 'leisure')
-                           ? null
-                           : formData.rentTimeId;
-    form.append('rentTimeId', rentTimeValue);
-
+  
+    // Если основная категория Our Portfolio или Leisure, rentTimeId не добавляем в форму
+    if (
+      formData.status.toLowerCase() !== 'our portfolio' &&
+      formData.status.toLowerCase() !== 'leisure'
+    ) {
+      form.append('rentTimeId', formData.rentTimeId);
+    }
+    
+    // Остальные данные (customData, изображения и т.д.)
     const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
       categoriesDataId: fieldId,
       value,
     }));
     form.append('customData', JSON.stringify(customDataArray));
-
-    // Если добавлены новые файлы – приоритет их отправки
+  
     if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
       fileFields.forEach((file) => {
         if (file) {
@@ -284,14 +286,13 @@ const ListingManager = observer(() => {
         }
       });
     } else {
-      // Отправляем обновленный порядок миниатюр
       const updatedImages = existingImages.map(img => ({
         id: img.id,
         image: img.image,
       }));
       form.append('updatedImages', JSON.stringify(updatedImages));
     }
-
+  
     if (editingListing) {
       await rentTimeStore.updateRental(editingListing.id, form);
     } else {

@@ -40,7 +40,7 @@ type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
 const ListingManager = observer(() => {
   const { rentTimeStore, categoriesStore } = useContext(Context)!;
-  
+
   // Состояния формы и диалога
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -123,9 +123,9 @@ const ListingManager = observer(() => {
     setCustomFieldsValues(
       listing.rental_custom_data
         ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
-            acc[curr.categoriesDataId] = curr.value;
-            return acc;
-          }, {})
+          acc[curr.categoriesDataId] = curr.value;
+          return acc;
+        }, {})
         : {}
     );
     // Загружаем миниатюры из объявления (существующие изображения)
@@ -262,29 +262,29 @@ const ListingManager = observer(() => {
       alert("Введите обязательные поля: Title и Price");
       return;
     }
-  
+
     // Закрываем диалог сразу, чтобы пользователь не мог повторно нажимать
     setIsDialogOpen(false);
     setIsLoading(true);
-  
+
     try {
       const form = new FormData();
       form.append('name', formData.name);
       form.append('description', formData.description);
       form.append('address', formData.address);
       form.append('price', formData.price);
-  
+
       const unitValue =
         (formData.status.toLowerCase() === 'rentals' ||
-         formData.status.toLowerCase() === 'leisure')
+          formData.status.toLowerCase() === 'leisure')
           ? formData.unit_of_numeration
           : null;
       form.append('unit_of_numeration', JSON.stringify(unitValue));
-  
+
       form.append('status', formData.status);
       form.append('featured', JSON.stringify(formData.featured));
       form.append('categoryId', formData.categoryId);
-  
+
       // Если основная категория Our Portfolio или Leisure, rentTimeId не добавляем
       if (
         formData.status.toLowerCase() !== 'our portfolio' &&
@@ -292,14 +292,14 @@ const ListingManager = observer(() => {
       ) {
         form.append('rentTimeId', formData.rentTimeId);
       }
-      
+
       // Остальные данные (customData, изображения и т.д.)
       const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
         categoriesDataId: fieldId,
         value,
       }));
       form.append('customData', JSON.stringify(customDataArray));
-  
+
       if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
         fileFields.forEach((file) => {
           if (file) {
@@ -313,7 +313,7 @@ const ListingManager = observer(() => {
         }));
         form.append('updatedImages', JSON.stringify(updatedImages));
       }
-  
+
       if (editingListing) {
         await rentTimeStore.updateRental(editingListing.id, form);
       } else {
@@ -515,10 +515,26 @@ const ListingManager = observer(() => {
               <Input
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Если введено не более 200 символов, обновляем состояние
+                  if (value.length <= 200) {
+                    setFormData({ ...formData, description: value });
+                  }
+                }}
                 placeholder="Description"
-                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
+                onFocus={(e) =>
+                  e.target.addEventListener("wheel", function (e) {
+                    e.preventDefault();
+                  }, { passive: false })
+                }
               />
+              {/* Счётчик оставшихся символов */}
+              <div className="text-right text-xs">
+                <span className={formData.description.length >= 200 ? "text-red-500" : "text-gray-500"}>
+                  {200 - formData.description.length}
+                </span>
+              </div>
             </div>
             {/* Селекты для Primary Category, Category */}
             <div className="space-y-2">
@@ -554,23 +570,23 @@ const ListingManager = observer(() => {
             {/* Селект Rent Time отображается только если выбрана категория, для которой он нужен */}
             {(formData.status.toLowerCase() !== "our portfolio" &&
               formData.status.toLowerCase() !== "leisure") && (
-              <div className="space-y-2">
-                <Label htmlFor="rentTimeId">Rent Time</Label>
-                <select
-                  id="rentTimeId"
-                  value={formData.rentTimeId}
-                  onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
-                  className="border rounded p-2 w-full"
-                >
-                  <option value="">Select Rent Time</option>
-                  {rentTimeStore.rentTimes.map((rt: any) => (
-                    <option key={rt.id} value={rt.id}>
-                      {rt.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+                <div className="space-y-2">
+                  <Label htmlFor="rentTimeId">Rent Time</Label>
+                  <select
+                    id="rentTimeId"
+                    value={formData.rentTimeId}
+                    onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
+                    className="border rounded p-2 w-full"
+                  >
+                    <option value="">Select Rent Time</option>
+                    {rentTimeStore.rentTimes.map((rt: any) => (
+                      <option key={rt.id} value={rt.id}>
+                        {rt.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             {/* Кастомные поля */}
             {renderCustomFields()}
             {/* Загрузка изображений / миниатюр */}

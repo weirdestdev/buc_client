@@ -141,6 +141,8 @@ function PropertyDetailsDialog({
                     <Bed className="w-4 h-4 mr-1" />
                   ) : null}
                   {item.value}
+                  {(item.categories_datum.name.includes("Plot Area") ||
+                    item.categories_datum.name.includes("Living Area")) && " m²"}
                 </div>
               </div>
             ))}

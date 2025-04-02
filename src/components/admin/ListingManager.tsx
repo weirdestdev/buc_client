@@ -61,9 +61,10 @@ const ListingManager = observer(() => {
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
 
-  // Новые состояния для управления существующими изображениями
+  // Состояния для управления существующими изображениями
   const [existingImages, setExistingImages] = useState<any[]>([]);
-  const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
+  // removedImageIds больше не используются, так как мы отправляем обновлённый массив
+  // и уже изменённый порядок формируется в existingImages
 
   useEffect(() => {
     rentTimeStore.loadRentals();
@@ -101,7 +102,6 @@ const ListingManager = observer(() => {
     setFileFields([]);
     setCustomFieldsValues({});
     setExistingImages([]);
-    setRemovedImageIds([]);
     setIsDialogOpen(true);
   };
 
@@ -127,9 +127,8 @@ const ListingManager = observer(() => {
           }, {})
         : {}
     );
-    // Загружаем существующие изображения и сбрасываем удалённые
+    // Загружаем существующие изображения и сбрасываем новые
     setExistingImages(listing.rentals_images || []);
-    setRemovedImageIds([]);
     setFileFields([]);
     setIsDialogOpen(true);
   };
@@ -165,7 +164,10 @@ const ListingManager = observer(() => {
               {/* Кнопка удаления */}
               <button
                 type="button"
-                onClick={() => handleRemoveExistingImage(imgObj.id)}
+                onClick={() => {
+                  // Удаляем изображение из массива, просто фильтруем его
+                  setExistingImages(existingImages.filter((img) => img.id !== imgObj.id));
+                }}
                 className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs p-0.5"
               >
                 X
@@ -196,12 +198,6 @@ const ListingManager = observer(() => {
         })}
       </div>
     );
-  };
-
-  // Обработчик удаления существующего изображения
-  const handleRemoveExistingImage = (id: number) => {
-    setRemovedImageIds([...removedImageIds, id]);
-    setExistingImages(existingImages.filter((img) => img.id !== id));
   };
 
   // Обработчик изменения порядка изображений
@@ -249,7 +245,7 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Сохранение объявления с учетом нового порядка и удаленных изображений
+  // Сохранение объявления с учетом обновленного массива изображений
   const handleSaveListing = async () => {
     if (!formData.name || !formData.price) {
       alert("Введите обязательные поля: Title и Price");
@@ -280,7 +276,7 @@ const ListingManager = observer(() => {
     }));
     form.append('customData', JSON.stringify(customDataArray));
 
-    // Добавляем новые изображения
+    // Если есть новые файлы, добавляем их
     if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
       fileFields.forEach((file) => {
         if (file) {
@@ -289,9 +285,12 @@ const ListingManager = observer(() => {
       });
     }
 
-    // Передаем порядок существующих изображений и список удалённых
-    form.append('existingImagesOrder', JSON.stringify(existingImages.map((img) => img.id)));
-    form.append('removedImages', JSON.stringify(removedImageIds));
+    // Вместо отдельных полей отправляем обновленный массив изображений,
+    // содержащий объекты с id и ссылкой на изображение.
+    form.append(
+      'updatedImages',
+      JSON.stringify(existingImages.map((img) => ({ id: img.id, image: img.image })))
+    );
 
     if (editingListing) {
       await rentTimeStore.updateRental(editingListing.id, form);

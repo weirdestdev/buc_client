@@ -360,8 +360,8 @@ const ListingManager = observer(() => {
     <div className="space-y-6">
       {/* Оверлей загрузки */}
       {isLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="text-white text-xl">Загрузка...</div>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[10000]">
+          <div className="text-white text-xl">Loading...</div>
         </div>
       )}
 

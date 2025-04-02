@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
 import { PenSquare, Trash2, Plus, Star } from 'lucide-react';
 import { Context } from '../../main';
 
@@ -41,7 +40,8 @@ type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
 const ListingManager = observer(() => {
   const { rentTimeStore, categoriesStore } = useContext(Context)!;
-  // Изменён порядок вкладок: Our Portfolio - Rentals - Leisure
+  
+  // Состояния формы и диалога
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
@@ -57,10 +57,13 @@ const ListingManager = observer(() => {
     rentTimeId: '',
   });
 
-  // Состояние для динамических полей загрузки файлов
+  // Состояния для загрузки файлов и кастомных полей
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
-  // Состояние для значений кастомных полей выбранной категории.
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
+
+  // Новые состояния для управления существующими изображениями
+  const [existingImages, setExistingImages] = useState<any[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
 
   useEffect(() => {
     rentTimeStore.loadRentals();
@@ -68,7 +71,7 @@ const ListingManager = observer(() => {
     rentTimeStore.loadRentTimes();
   }, [rentTimeStore, categoriesStore]);
 
-  // Фильтрация объявлений по вкладкам по значению status
+  // Фильтрация объявлений по активной вкладке
   const filteredListings = rentTimeStore.rentals.filter((listing: any) => {
     const status = listing.status?.toLowerCase() || '';
     return status === activeTab.toLowerCase();
@@ -81,6 +84,7 @@ const ListingManager = observer(() => {
     await rentTimeStore.loadRentals();
   };
 
+  // Открытие диалога для добавления нового объявления
   const openAddDialog = () => {
     setEditingListing(null);
     setFormData({
@@ -96,9 +100,12 @@ const ListingManager = observer(() => {
     });
     setFileFields([]);
     setCustomFieldsValues({});
+    setExistingImages([]);
+    setRemovedImageIds([]);
     setIsDialogOpen(true);
   };
 
+  // Открытие диалога для редактирования объявления
   const openEditDialog = (listing: any) => {
     setEditingListing(listing);
     setFormData({
@@ -115,15 +122,19 @@ const ListingManager = observer(() => {
     setCustomFieldsValues(
       listing.rental_custom_data
         ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
-          acc[curr.categoriesDataId] = curr.value;
-          return acc;
-        }, {})
+            acc[curr.categoriesDataId] = curr.value;
+            return acc;
+          }, {})
         : {}
     );
+    // Загружаем существующие изображения и сбрасываем удалённые
+    setExistingImages(listing.rentals_images || []);
+    setRemovedImageIds([]);
     setFileFields([]);
     setIsDialogOpen(true);
   };
 
+  // Добавление нового поля для загрузки файла
   const addFileField = () => {
     setFileFields([...fileFields, null]);
   };
@@ -137,12 +148,108 @@ const ListingManager = observer(() => {
     }
   };
 
-  // Определяем выбранную категорию по select categoryId
-  const selectedCategory = categoriesStore.categories.find(
-    (cat: any) => cat.id.toString() === formData.categoryId
-  );
+  // Отрисовка существующих изображений с кнопками удаления и изменения порядка
+  const renderExistingImages = () => {
+    if (existingImages.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {existingImages.map((imgObj: any, index: number) => {
+          const img = imgObj.image;
+          return (
+            <div key={imgObj.id} className="relative">
+              <img
+                src={img.startsWith('http') ? img : `${SERVER_URL}${img}`}
+                alt={`listing-${index}`}
+                className="h-12 w-12 object-cover rounded"
+              />
+              {/* Кнопка удаления */}
+              <button
+                type="button"
+                onClick={() => handleRemoveExistingImage(imgObj.id)}
+                className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs p-0.5"
+              >
+                X
+              </button>
+              {/* Кнопки изменения порядка */}
+              <div className="flex flex-col absolute left-0 top-0">
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => moveExistingImage(index, index - 1)}
+                    className="bg-gray-300 text-xs rounded mb-1"
+                  >
+                    ↑
+                  </button>
+                )}
+                {index < existingImages.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={() => moveExistingImage(index, index + 1)}
+                    className="bg-gray-300 text-xs rounded"
+                  >
+                    ↓
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
-  // При сохранении сохраняем все поля, вне зависимости от видимости
+  // Обработчик удаления существующего изображения
+  const handleRemoveExistingImage = (id: number) => {
+    setRemovedImageIds([...removedImageIds, id]);
+    setExistingImages(existingImages.filter((img) => img.id !== id));
+  };
+
+  // Обработчик изменения порядка изображений
+  const moveExistingImage = (from: number, to: number) => {
+    const updated = [...existingImages];
+    const temp = updated[from];
+    updated[from] = updated[to];
+    updated[to] = temp;
+    setExistingImages(updated);
+  };
+
+  // Отрисовка кастомных полей, привязанных к выбранной категории
+  const renderCustomFields = () => {
+    if (!formData.categoryId) return null;
+    const selectedCategory = categoriesStore.categories.find(
+      (cat: any) => cat.id.toString() === formData.categoryId
+    );
+    if (!selectedCategory || !selectedCategory.customFields) return null;
+    return (
+      <div className="space-y-2">
+        <Label>Custom Fields</Label>
+        {selectedCategory.customFields.map((field: any) => {
+          let inputType = 'text';
+          if (field.type === 'int' || field.type === 'double') {
+            inputType = 'number';
+          } else if (field.type === 'date') {
+            inputType = 'date';
+          }
+          return (
+            <div key={field.id} className="space-y-1">
+              <Label htmlFor={`custom-${field.id}`}>{field.name}</Label>
+              <Input
+                id={`custom-${field.id}`}
+                type={inputType}
+                value={customFieldsValues[field.id] || ''}
+                onChange={(e) =>
+                  setCustomFieldsValues({ ...customFieldsValues, [field.id]: e.target.value })
+                }
+                placeholder={`Enter ${field.name}`}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Сохранение объявления с учетом нового порядка и удаленных изображений
   const handleSaveListing = async () => {
     if (!formData.name || !formData.price) {
       alert("Введите обязательные поля: Title и Price");
@@ -155,10 +262,9 @@ const ListingManager = observer(() => {
     form.append('address', formData.address);
     form.append('price', formData.price);
 
-    // Если primary category не соответствует Rentals или Leisure, отправляем null
     const unitValue =
       (formData.status.toLowerCase() === 'rentals' ||
-        formData.status.toLowerCase() === 'leisure')
+       formData.status.toLowerCase() === 'leisure')
         ? formData.unit_of_numeration
         : null;
     form.append('unit_of_numeration', JSON.stringify(unitValue));
@@ -174,13 +280,18 @@ const ListingManager = observer(() => {
     }));
     form.append('customData', JSON.stringify(customDataArray));
 
-    if (fileFields.length > 0 && fileFields.some(file => file !== null)) {
+    // Добавляем новые изображения
+    if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
       fileFields.forEach((file) => {
         if (file) {
           form.append('images', file);
         }
       });
-    }    
+    }
+
+    // Передаем порядок существующих изображений и список удалённых
+    form.append('existingImagesOrder', JSON.stringify(existingImages.map((img) => img.id)));
+    form.append('removedImages', JSON.stringify(removedImageIds));
 
     if (editingListing) {
       await rentTimeStore.updateRental(editingListing.id, form);
@@ -218,60 +329,6 @@ const ListingManager = observer(() => {
 
   const renderRentTime = (listing: any) => {
     return listing.rent_time?.name || '-';
-  };
-
-  const renderExistingImages = (listing: any) => {
-    if (!listing || !listing.rentals_images || listing.rentals_images.length === 0) return null;
-    const images = listing.rentals_images.slice(0, 15);
-    return (
-      <div className="flex flex-wrap gap-2 mt-2">
-        {images.map((imgObj: any, index: number) => {
-          const img = imgObj.image;
-          return (
-            <img
-              key={index}
-              src={img.startsWith('http') ? img : `${SERVER_URL}${img}`}
-              alt={`listing-${index}`}
-              className="h-12 w-12 object-cover rounded"
-            />
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Функция отрисовки кастомных полей остаётся без изменений
-  const renderCustomFields = () => {
-    if (!formData.categoryId) return null;
-    const selectedCategory = categoriesStore.categories.find(
-      (cat: any) => cat.id.toString() === formData.categoryId
-    );
-    if (!selectedCategory || !selectedCategory.customFields) return null;
-    return (
-      <div className="space-y-2">
-        <Label>Custom Fields</Label>
-        {selectedCategory.customFields.map((field: any) => {
-          let inputType = 'text';
-          if (field.type === 'int' || field.type === 'double') {
-            inputType = 'number';
-          } else if (field.type === 'date') {
-            inputType = 'date';
-          }
-          return (
-            <div key={field.id} className="space-y-1">
-              <Label htmlFor={`custom-${field.id}`}>{field.name}</Label>
-              <Input
-                id={`custom-${field.id}`}
-                type={inputType}
-                value={customFieldsValues[field.id] || ''}
-                onChange={(e) => setCustomFieldsValues({ ...customFieldsValues, [field.id]: e.target.value })}
-                placeholder={`Enter ${field.name}`}
-              />
-            </div>
-          );
-        })}
-      </div>
-    );
   };
 
   return (
@@ -387,7 +444,7 @@ const ListingManager = observer(() => {
                 required
               />
             </div>
-            {/* Price Period: отображаем только если выбрана категория Rentals или Leisure */}
+            {/* Price Period для категорий Rentals или Leisure */}
             {(formData.status.toLowerCase() === "rentals" || formData.status.toLowerCase() === "leisure") && (
               <div className="space-y-2">
                 <Label htmlFor="unit_of_numeration">Price Period</Label>
@@ -409,7 +466,7 @@ const ListingManager = observer(() => {
                 placeholder="Description"
               />
             </div>
-            {/* Селекты, которые остаются без изменений */}
+            {/* Селекты для Primary Category, Category и Rent Time */}
             <div className="space-y-2">
               <Label htmlFor="status">Primary Category</Label>
               <select
@@ -456,12 +513,12 @@ const ListingManager = observer(() => {
                 ))}
               </select>
             </div>
-            {/* Custom Fields */}
+            {/* Кастомные поля */}
             {renderCustomFields()}
-            {/* Images Upload */}
+            {/* Загрузка изображений */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>
-              {editingListing && renderExistingImages(editingListing)}
+              {editingListing && renderExistingImages()}
               {fileFields.map((file, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input

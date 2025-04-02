@@ -263,7 +263,12 @@ const ListingManager = observer(() => {
     form.append('status', formData.status);
     form.append('featured', JSON.stringify(formData.featured));
     form.append('categoryId', formData.categoryId);
-    form.append('rentTimeId', formData.rentTimeId);
+    // Если выбрана основная категория Our Portfolio или Leisure, отправляем rentTimeId как null
+    const rentTimeValue = (formData.status.toLowerCase() === 'our portfolio' ||
+                           formData.status.toLowerCase() === 'leisure')
+                           ? null
+                           : formData.rentTimeId;
+    form.append('rentTimeId', rentTimeValue);
 
     const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
       categoriesDataId: fieldId,
@@ -278,10 +283,8 @@ const ListingManager = observer(() => {
           form.append('images', file);
         }
       });
-    }
-    // Иначе отправляем обновленный порядок миниатюр
-    else {
-      // Формируем массив обновленных миниатюр (объекты с id и image)
+    } else {
+      // Отправляем обновленный порядок миниатюр
       const updatedImages = existingImages.map(img => ({
         id: img.id,
         image: img.image,
@@ -323,7 +326,14 @@ const ListingManager = observer(() => {
     );
   };
 
+  // Если категория объявления не поддерживает rent time, возвращаем "-"
   const renderRentTime = (listing: any) => {
+    if (
+      listing.status?.toLowerCase() === "our portfolio" ||
+      listing.status?.toLowerCase() === "leisure"
+    ) {
+      return '-';
+    }
     return listing.rent_time?.name || '-';
   };
 
@@ -462,7 +472,7 @@ const ListingManager = observer(() => {
                 placeholder="Description"
               />
             </div>
-            {/* Селекты для Primary Category, Category и Rent Time */}
+            {/* Селекты для Primary Category, Category */}
             <div className="space-y-2">
               <Label htmlFor="status">Primary Category</Label>
               <select
@@ -493,22 +503,26 @@ const ListingManager = observer(() => {
                 ))}
               </select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="rentTimeId">Rent Time</Label>
-              <select
-                id="rentTimeId"
-                value={formData.rentTimeId}
-                onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
-                className="border rounded p-2 w-full"
-              >
-                <option value="">Select Rent Time</option>
-                {rentTimeStore.rentTimes.map((rt: any) => (
-                  <option key={rt.id} value={rt.id}>
-                    {rt.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Селект Rent Time отображается только если выбрана категория, для которой он нужен */}
+            {(formData.status.toLowerCase() !== "our portfolio" &&
+              formData.status.toLowerCase() !== "leisure") && (
+              <div className="space-y-2">
+                <Label htmlFor="rentTimeId">Rent Time</Label>
+                <select
+                  id="rentTimeId"
+                  value={formData.rentTimeId}
+                  onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
+                  className="border rounded p-2 w-full"
+                >
+                  <option value="">Select Rent Time</option>
+                  {rentTimeStore.rentTimes.map((rt: any) => (
+                    <option key={rt.id} value={rt.id}>
+                      {rt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {/* Кастомные поля */}
             {renderCustomFields()}
             {/* Загрузка изображений / миниатюр */}

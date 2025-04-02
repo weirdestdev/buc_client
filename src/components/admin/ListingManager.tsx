@@ -64,6 +64,9 @@ const ListingManager = observer(() => {
   // Состояние для управления миниатюрами (существующими изображениями)
   const [existingImages, setExistingImages] = useState<any[]>([]);
 
+  // Состояние загрузки для предотвращения дубликатов и блокировки UI
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     rentTimeStore.loadRentals();
     categoriesStore.loadCategories();
@@ -240,73 +243,88 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Сохранение объявления
+  // Сохранение объявления с отображением загрузки
   const handleSaveListing = async () => {
     if (!formData.name || !formData.price) {
       alert("Введите обязательные поля: Title и Price");
       return;
     }
   
-    const form = new FormData();
-    form.append('name', formData.name);
-    form.append('description', formData.description);
-    form.append('address', formData.address);
-    form.append('price', formData.price);
+    setIsLoading(true);
   
-    const unitValue =
-      (formData.status.toLowerCase() === 'rentals' ||
-       formData.status.toLowerCase() === 'leisure')
-        ? formData.unit_of_numeration
-        : null;
-    form.append('unit_of_numeration', JSON.stringify(unitValue));
+    try {
+      const form = new FormData();
+      form.append('name', formData.name);
+      form.append('description', formData.description);
+      form.append('address', formData.address);
+      form.append('price', formData.price);
   
-    form.append('status', formData.status);
-    form.append('featured', JSON.stringify(formData.featured));
-    form.append('categoryId', formData.categoryId);
+      const unitValue =
+        (formData.status.toLowerCase() === 'rentals' ||
+         formData.status.toLowerCase() === 'leisure')
+          ? formData.unit_of_numeration
+          : null;
+      form.append('unit_of_numeration', JSON.stringify(unitValue));
   
-    // Если основная категория Our Portfolio или Leisure, rentTimeId не добавляем в форму
-    if (
-      formData.status.toLowerCase() !== 'our portfolio' &&
-      formData.status.toLowerCase() !== 'leisure'
-    ) {
-      form.append('rentTimeId', formData.rentTimeId);
-    }
-    
-    // Остальные данные (customData, изображения и т.д.)
-    const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
-      categoriesDataId: fieldId,
-      value,
-    }));
-    form.append('customData', JSON.stringify(customDataArray));
+      form.append('status', formData.status);
+      form.append('featured', JSON.stringify(formData.featured));
+      form.append('categoryId', formData.categoryId);
   
-    if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
-      fileFields.forEach((file) => {
-        if (file) {
-          form.append('images', file);
-        }
-      });
-    } else {
-      const updatedImages = existingImages.map(img => ({
-        id: img.id,
-        image: img.image,
+      // Если основная категория Our Portfolio или Leisure, rentTimeId не добавляем
+      if (
+        formData.status.toLowerCase() !== 'our portfolio' &&
+        formData.status.toLowerCase() !== 'leisure'
+      ) {
+        form.append('rentTimeId', formData.rentTimeId);
+      }
+      
+      // Остальные данные (customData, изображения и т.д.)
+      const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
+        categoriesDataId: fieldId,
+        value,
       }));
-      form.append('updatedImages', JSON.stringify(updatedImages));
-    }
+      form.append('customData', JSON.stringify(customDataArray));
   
-    if (editingListing) {
-      await rentTimeStore.updateRental(editingListing.id, form);
-    } else {
-      await rentTimeStore.addRental(form);
+      if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
+        fileFields.forEach((file) => {
+          if (file) {
+            form.append('images', file);
+          }
+        });
+      } else {
+        const updatedImages = existingImages.map(img => ({
+          id: img.id,
+          image: img.image,
+        }));
+        form.append('updatedImages', JSON.stringify(updatedImages));
+      }
+  
+      if (editingListing) {
+        await rentTimeStore.updateRental(editingListing.id, form);
+      } else {
+        await rentTimeStore.addRental(form);
+      }
+      await rentTimeStore.loadRentals();
+      setIsDialogOpen(false);
+      setFileFields([]);
+    } catch (error) {
+      console.error("Ошибка создания объявления:", error);
+    } finally {
+      setIsLoading(false);
     }
-    await rentTimeStore.loadRentals();
-    setIsDialogOpen(false);
-    setFileFields([]);
   };
 
   const handleDeleteListing = async (id: number) => {
     if (window.confirm("Вы действительно хотите удалить это объявление?")) {
-      await rentTimeStore.removeRental(id);
-      await rentTimeStore.loadRentals();
+      setIsLoading(true);
+      try {
+        await rentTimeStore.removeRental(id);
+        await rentTimeStore.loadRentals();
+      } catch (error) {
+        console.error("Ошибка при удалении объявления:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -340,6 +358,13 @@ const ListingManager = observer(() => {
 
   return (
     <div className="space-y-6">
+      {/* Оверлей загрузки */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="text-white text-xl">Загрузка...</div>
+        </div>
+      )}
+
       {/* Вкладки для сортировки */}
       <div className="flex space-x-4">
         {(['Our Portfolio', 'Rentals', 'Leisure'] as ActiveTab[]).map((tab) => (

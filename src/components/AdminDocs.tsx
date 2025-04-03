@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { observer } from 'mobx-react-lite';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
@@ -71,8 +72,9 @@ const AdminDocs = () => {
       // Получаем данные документа из стора
       const docRecord = docsStore.docs[docId];
       if (docRecord && docRecord.path) {
-        // Получаем содержимое документа по пути
-        const response = await fetch(docRecord.path);
+        // Формируем полный URL, подставляя VITE_SERVER_URL
+        const url = `${import.meta.env.VITE_SERVER_URL}${docRecord.path}`;
+        const response = await fetch(url);
         const text = await response.text();
         setModalText(text);
         setModalTitle(title);
@@ -143,4 +145,4 @@ const AdminDocs = () => {
   );
 };
 
-export default AdminDocs;
+export default observer(AdminDocs);

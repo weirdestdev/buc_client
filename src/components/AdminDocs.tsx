@@ -1,6 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import { Context } from '@/main';
 
 const docsList = [
   { id: 'terms', title: 'Terms & Conditions' },
@@ -16,6 +27,14 @@ const AdminDocs = () => {
     cookie: null,
   });
 
+  // Состояния для модального окна
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalText, setModalText] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
+
+  // Получаем DocsStore из контекста
+  const { docsStore } = useContext(Context);
+
   // Обработчик изменения файла для конкретного документа
   const handleFileChange = (e, id) => {
     if (e.target.files && e.target.files[0]) {
@@ -23,10 +42,36 @@ const AdminDocs = () => {
     }
   };
 
-  // Обработчик кнопки "Save"
-  const handleSave = () => {
-    console.log('Сохранение документов:', files);
-    // Здесь можно добавить вызов API для сохранения или обновления файлов
+  // Обработчик кнопки "Save" для загрузки выбранных файлов
+  const handleSave = async () => {
+    try {
+      for (const docType of Object.keys(files)) {
+        const file = files[docType];
+        if (file) {
+          await docsStore.uploadDocument(docType, file);
+        }
+      }
+      console.log('Документы успешно сохранены.');
+    } catch (error) {
+      console.error('Ошибка при сохранении документов:', error);
+    }
+  };
+
+  // Обработчик для чтения документа
+  const handleReadDoc = async (docId, title) => {
+    try {
+      // Если запись существует, получаем путь к файлу
+      const docRecord = docsStore.docs[docId];
+      if (docRecord && docRecord.path) {
+        const response = await fetch(docRecord.path);
+        const text = await response.text();
+        setModalText(text);
+        setModalTitle(title);
+        setModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Ошибка при чтении документа:', error);
+    }
   };
 
   return (
@@ -37,6 +82,7 @@ const AdminDocs = () => {
           <TableRow>
             <TableHead>Document</TableHead>
             <TableHead>File</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -50,6 +96,14 @@ const AdminDocs = () => {
                   onChange={(e) => handleFileChange(e, doc.id)}
                 />
               </TableCell>
+              <TableCell>
+                {/* Если документ уже загружен, отображаем кнопку для чтения */}
+                {docsStore.docs[doc.id] && (
+                  <Button size="sm" variant="outline" onClick={() => handleReadDoc(doc.id, doc.title)}>
+                    Read Document
+                  </Button>
+                )}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -57,6 +111,21 @@ const AdminDocs = () => {
       <Button onClick={handleSave} className="mt-4">
         Save
       </Button>
+
+      {/* Модальное окно для отображения текста документа */}
+      <AlertDialog open={modalOpen} onOpenChange={setModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{modalTitle}</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription style={{ whiteSpace: 'pre-wrap', maxHeight: '60vh', overflowY: 'auto' }}>
+            {modalText}
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setModalOpen(false)}>Close</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

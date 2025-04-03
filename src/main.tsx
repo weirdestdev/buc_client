@@ -1,3 +1,4 @@
+// main.tsx
 import React, { createContext } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
@@ -5,20 +6,23 @@ import "./index.css";
 import UserStore from "./store/UserStore";
 import UserWorkStore from "./store/UserWorkStore";
 import CategoriesStore from "./store/CategoriesStore";
-import RentTimeStore from "./store/RentStore"; // импорт нового стора
+import RentTimeStore from "./store/RentStore";
+import DocsStore from "./store/DocsStore"; // импорт нового стора
 
 export interface IRootStore {
   userStore: UserStore;
   userWorkStore: UserWorkStore;
   categoriesStore: CategoriesStore;
-  rentTimeStore: RentTimeStore; // добавляем новый стор
+  rentTimeStore: RentTimeStore;
+  docsStore: DocsStore; // добавляем новый стор
 }
 
 const rootStore: IRootStore = {
   userStore: new UserStore(),
   userWorkStore: new UserWorkStore(),
   categoriesStore: new CategoriesStore(),
-  rentTimeStore: new RentTimeStore(), // инициализируем новый стор
+  rentTimeStore: new RentTimeStore(),
+  docsStore: new DocsStore(), // инициализируем новый стор
 };
 
 export const Context = createContext<IRootStore | null>(null);

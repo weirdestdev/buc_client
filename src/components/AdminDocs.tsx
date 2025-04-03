@@ -41,6 +41,11 @@ const AdminDocs = () => {
   // Обработчик изменения файла для конкретного документа
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, id: "terms" | "privacy" | "cookie") => {
     if (e.target.files && e.target.files[0]) {
+      // Проверяем, что выбранный файл имеет расширение .txt
+      if (e.target.files[0].type !== "text/plain") {
+        alert("Пожалуйста, выберите файл с расширением .txt");
+        return;
+      }
       setFiles({ ...files, [id]: e.target.files[0] });
     }
   };
@@ -60,12 +65,13 @@ const AdminDocs = () => {
     }
   };
 
-  // Обработчик для чтения документа
+  // Обработчик для чтения документа и открытия модального окна
   const handleReadDoc = async (docId: "terms" | "privacy" | "cookie", title: string) => {
     try {
-      // Если запись существует, получаем путь к файлу
+      // Получаем данные документа из стора
       const docRecord = docsStore.docs[docId];
       if (docRecord && docRecord.path) {
+        // Получаем содержимое документа по пути
         const response = await fetch(docRecord.path);
         const text = await response.text();
         setModalText(text);
@@ -102,7 +108,11 @@ const AdminDocs = () => {
               <TableCell>
                 {/* Если документ уже загружен, отображаем кнопку для чтения */}
                 {docsStore.docs[doc.id as "terms" | "privacy" | "cookie"] && (
-                  <Button size="sm" variant="outline" onClick={() => handleReadDoc(doc.id as "terms" | "privacy" | "cookie", doc.title)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleReadDoc(doc.id as "terms" | "privacy" | "cookie", doc.title)}
+                  >
                     Read Document
                   </Button>
                 )}

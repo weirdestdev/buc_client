@@ -12,3 +12,9 @@ export const uploadDoc = async (docType: string, file: File) => {
   });
   return data;
 };
+
+// Функция для получения документа
+export const getDoc = async (docType: string) => {
+  const { data } = await $authHost.get("api/docs", { params: { docType } });
+  return data;
+};

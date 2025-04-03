@@ -1,6 +1,6 @@
 // store/DocsStore.ts
 import { makeAutoObservable } from "mobx";
-import { uploadDoc } from "../http/docsAPI";
+import { uploadDoc, getDoc } from "../http/docsAPI";
 
 interface IDoc {
   id: number;
@@ -28,6 +28,19 @@ class DocsStore {
       return data;
     } catch (error) {
       console.error("Error uploading document:", error);
+      throw error;
+    }
+  }
+
+  // Метод для получения документа
+  async fetchDocument(docType: "terms" | "privacy" | "cookie") {
+    try {
+      const data = await getDoc(docType);
+      // Обновляем состояние, если документ найден
+      this.docs[docType] = data.doc || null;
+      return data;
+    } catch (error) {
+      console.error("Error fetching document:", error);
       throw error;
     }
   }

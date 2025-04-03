@@ -1,25 +1,40 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Context } from '../main';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Context } from "../main";
 
 interface CreateMemberRequestModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({ open, onClose }) => {
-  const { userStore, memberRequestsStore } = useContext(Context)!;
-  const [email, setEmail] = useState(userStore.user.email || '');
-  const [message, setMessage] = useState('');
+const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({
+  open,
+  onClose,
+}) => {
+  const context = useContext(Context);
+  
+  // Проверяем, что контекст существует
+  if (!context) {
+    console.error("Context is not available");
+    return null;
+  }
+
+  const { userStore, memberRequestsStore } = context;
+  
+  // Проверяем, что userStore.user существует, если нет, задаём пустые значения
+  const user = userStore.user || { fullname: "", email: "" };
+
+  const [email, setEmail] = useState(user.email);
+  const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const maxMessageLength = 200;
@@ -30,15 +45,11 @@ const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({ ope
 
     try {
       setIsSubmitting(true);
-      await memberRequestsStore.addRequest(
-        userStore.user.fullname,
-        email,
-        message
-      );
+      await memberRequestsStore.addRequest(user.fullname, email, message);
       onClose();
-      setMessage('');
+      setMessage("");
     } catch (error) {
-      console.error('Error creating member request', error);
+      console.error("Error creating member request", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -76,9 +87,13 @@ const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({ ope
               placeholder="Enter your message..."
               required
               onFocus={(e) =>
-                e.target.addEventListener("wheel", function (e) {
-                  e.preventDefault();
-                }, { passive: false })
+                e.target.addEventListener(
+                  "wheel",
+                  function (e) {
+                    e.preventDefault();
+                  },
+                  { passive: false }
+                )
               }
             />
             <div className="text-right text-xs text-gray-500">
@@ -90,7 +105,7 @@ const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({ ope
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Sending...' : 'Send Request'}
+              {isSubmitting ? "Sending..." : "Send Request"}
             </Button>
           </DialogFooter>
         </form>

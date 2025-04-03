@@ -16,81 +16,146 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
-interface Member {
+interface MemberRequest {
   id: number;
-  name: string;
+  date: string; // дата и время отправки
+  memberName: string;
   email: string;
-  role: 'member' | 'moderator' | 'admin';
-  joined: string; // дата регистрации
+  message: string; // текст до 200 символов
+  status: 'new' | 'viewed' | 'completed';
 }
 
-const initialMembers: Member[] = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', role: 'member', joined: '2025-03-20' },
-  { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'moderator', joined: '2025-03-22' },
-  { id: 3, name: 'Alice Johnson', email: 'alice@example.com', role: 'admin', joined: '2025-03-25' },
+const initialRequests: MemberRequest[] = [
+  {
+    id: 1,
+    date: '2025-04-01 10:30',
+    memberName: 'Иван Иванов',
+    email: 'ivan@mail.com',
+    message: 'Привет, мне нужна помощь с регистрацией. Сообщение ограничено 200 символами, оставшиеся символы показываются внизу поля.',
+    status: 'new',
+  },
+  {
+    id: 2,
+    date: '2025-04-02 14:15',
+    memberName: 'Мария Петрова',
+    email: 'maria@mail.com',
+    message: 'Хочу оставить отзыв по работе сайта. Текст сообщения до 200 символов, если превышает – ограничение не даст ввести больше.',
+    status: 'viewed',
+  },
 ];
 
 const MemberRequest: React.FC = () => {
-  const [members] = useState<Member[]>(initialMembers);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [requests, setRequests] = useState<MemberRequest[]>(initialRequests);
+  const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const openModal = (member: Member) => {
-    setSelectedMember(member);
+  // Функция для изменения статуса заявки (из таблицы и модального окна)
+  const handleStatusChange = (id: number, newStatus: MemberRequest['status']) => {
+    setRequests((prev) =>
+      prev.map((req) => (req.id === id ? { ...req, status: newStatus } : req))
+    );
+    if (selectedRequest && selectedRequest.id === id) {
+      setSelectedRequest({ ...selectedRequest, status: newStatus });
+    }
+  };
+
+  // Открытие модального окна с подробной информацией заявки
+  const openModal = (request: MemberRequest) => {
+    setSelectedRequest(request);
     setIsModalOpen(true);
   };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Members</h2>
+      <h2 className="text-2xl font-bold">Member Requests</h2>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead>Name</TableHead>
+              <TableHead>Date & Time</TableHead>
+              <TableHead>Member Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Joined</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>{member.id}</TableCell>
-                <TableCell>{member.name}</TableCell>
-                <TableCell>{member.email}</TableCell>
-                <TableCell>{member.role}</TableCell>
-                <TableCell>{member.joined}</TableCell>
+            {requests.map((req) => (
+              <TableRow key={req.id}>
+                <TableCell>{req.id}</TableCell>
+                <TableCell>{req.date}</TableCell>
+                <TableCell>{req.memberName}</TableCell>
+                <TableCell>{req.email}</TableCell>
                 <TableCell>
-                  <Button onClick={() => openModal(member)}>View Details</Button>
+                  <select
+                    value={req.status}
+                    onChange={(e) =>
+                      handleStatusChange(req.id, e.target.value as MemberRequest['status'])
+                    }
+                    className="border rounded p-1"
+                  >
+                    <option value="new">New</option>
+                    <option value="viewed">Viewed</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </TableCell>
+                <TableCell>
+                  <Button onClick={() => openModal(req)}>Details</Button>
                 </TableCell>
               </TableRow>
             ))}
-            {members.length === 0 && (
+            {requests.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No members found.
+                  No member requests.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      
+
+      {/* Модальное окно с подробной информацией */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Member Details</DialogTitle>
+            <DialogTitle>Member Request Details</DialogTitle>
           </DialogHeader>
-          {selectedMember && (
+          {selectedRequest && (
             <div className="space-y-4">
-              <p><strong>ID:</strong> {selectedMember.id}</p>
-              <p><strong>Name:</strong> {selectedMember.name}</p>
-              <p><strong>Email:</strong> {selectedMember.email}</p>
-              <p><strong>Role:</strong> {selectedMember.role}</p>
-              <p><strong>Joined:</strong> {selectedMember.joined}</p>
+              <p>
+                <strong>ID:</strong> {selectedRequest.id}
+              </p>
+              <p>
+                <strong>Date & Time:</strong> {selectedRequest.date}
+              </p>
+              <p>
+                <strong>Member Name:</strong> {selectedRequest.memberName}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedRequest.email}
+              </p>
+              <p>
+                <strong>Message:</strong> {selectedRequest.message}
+              </p>
+              <p>
+                <strong>Status:</strong>
+                <select
+                  value={selectedRequest.status}
+                  onChange={(e) =>
+                    handleStatusChange(
+                      selectedRequest.id,
+                      e.target.value as MemberRequest['status']
+                    )
+                  }
+                  className="ml-2 border rounded p-1"
+                >
+                  <option value="new">New</option>
+                  <option value="viewed">Viewed</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </p>
             </div>
           )}
           <DialogFooter>

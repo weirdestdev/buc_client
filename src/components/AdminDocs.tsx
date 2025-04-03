@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -20,41 +20,39 @@ const docsList = [
 ];
 
 const AdminDocs = () => {
-  // Состояние для хранения выбранных файлов
-  const [files, setFiles] = useState<{
-    terms: File | null;
-    privacy: File | null;
-    cookie: File | null;
-  }>({
+  const [files, setFiles] = useState<{ terms: File | null; privacy: File | null; cookie: File | null }>({
     terms: null,
     privacy: null,
     cookie: null,
   });
 
-  // Состояния для модального окна
   const [modalOpen, setModalOpen] = useState(false);
   const [modalText, setModalText] = useState('');
   const [modalTitle, setModalTitle] = useState('');
 
-  // Получаем DocsStore из контекста
   const { docsStore } = useContext(Context)!;
 
-  // Обработчик изменения файла для конкретного документа
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, id: "terms" | "privacy" | "cookie") => {
+  useEffect(() => {
+    (async () => {
+      for (const doc of docsList) {
+        await docsStore.fetchDocument(doc.id as 'terms' | 'privacy' | 'cookie');
+      }
+    })();
+  }, [docsStore]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, id: 'terms' | 'privacy' | 'cookie') => {
     if (e.target.files && e.target.files[0]) {
-      // Проверяем, что выбранный файл имеет расширение .txt
-      if (e.target.files[0].type !== "text/plain") {
-        alert("Пожалуйста, выберите файл с расширением .txt");
+      if (e.target.files[0].type !== 'text/plain') {
+        alert('Пожалуйста, выберите файл с расширением .txt');
         return;
       }
-      setFiles({ ...files, [id]: e.target.files[0] });
+      setFiles((prev) => ({ ...prev, [id]: e.target.files![0] }));
     }
   };
 
-  // Обработчик кнопки "Save" для загрузки выбранных файлов
   const handleSave = async () => {
     try {
-      for (const docType of Object.keys(files) as ("terms" | "privacy" | "cookie")[]) {
+      for (const docType of Object.keys(files) as ('terms' | 'privacy' | 'cookie')[]) {
         const file = files[docType];
         if (file) {
           await docsStore.uploadDocument(docType, file);
@@ -66,13 +64,10 @@ const AdminDocs = () => {
     }
   };
 
-  // Обработчик для чтения документа и открытия модального окна
-  const handleReadDoc = async (docId: "terms" | "privacy" | "cookie", title: string) => {
+  const handleReadDoc = async (docId: 'terms' | 'privacy' | 'cookie', title: string) => {
     try {
-      // Получаем данные документа из стора
       const docRecord = docsStore.docs[docId];
       if (docRecord && docRecord.path) {
-        // Формируем полный URL, подставляя VITE_SERVER_URL
         const url = `${import.meta.env.VITE_SERVER_URL}${docRecord.path}`;
         const response = await fetch(url);
         const text = await response.text();
@@ -101,20 +96,11 @@ const AdminDocs = () => {
             <TableRow key={doc.id}>
               <TableCell>{doc.title}</TableCell>
               <TableCell>
-                <input
-                  type="file"
-                  accept=".txt"
-                  onChange={(e) => handleFileChange(e, doc.id as "terms" | "privacy" | "cookie")}
-                />
+                <input type="file" accept=".txt" onChange={(e) => handleFileChange(e, doc.id as 'terms' | 'privacy' | 'cookie')} />
               </TableCell>
               <TableCell>
-                {/* Если документ уже загружен, отображаем кнопку для чтения */}
-                {docsStore.docs[doc.id as "terms" | "privacy" | "cookie"] && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleReadDoc(doc.id as "terms" | "privacy" | "cookie", doc.title)}
-                  >
+                {docsStore.docs[doc.id as 'terms' | 'privacy' | 'cookie']?.path && (
+                  <Button size="sm" variant="outline" onClick={() => handleReadDoc(doc.id as 'terms' | 'privacy' | 'cookie', doc.title)}>
                     Read Document
                   </Button>
                 )}
@@ -127,7 +113,6 @@ const AdminDocs = () => {
         Save
       </Button>
 
-      {/* Модальное окно для отображения текста документа */}
       <AlertDialog open={modalOpen} onOpenChange={setModalOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Tag } from 'lucide-react';
+import { FileText, Tag } from 'lucide-react';
 import { Context } from '../main';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +27,7 @@ import { approveUser, blockUser, unblockUser } from '@/http/userWorkAPI';
 import CategoriesTable from '@/components/CategoriesTable';
 import RentTimeTable from '@/components/RentTimeTable';
 import { Calendar } from 'lucide-react';
+import AdminDocs from '@/components/AdminDocs';
 
 const Admin = observer(() => {
   const navigate = useNavigate();
@@ -259,6 +260,12 @@ const Admin = observer(() => {
                 <span>Rent Time</span>
               </TabsTrigger>
             )}
+             {userStore.admin?.role === 'admin' && (
+              <TabsTrigger value="docs" className="flex items-center">
+                <FileText className="mr-2 h-4 w-4" />
+                <span>Docs</span>
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="users">
             {/* Статистика */}
@@ -380,6 +387,9 @@ const Admin = observer(() => {
           </TabsContent>
           <TabsContent value="renttime">
             {userStore.admin?.role === 'admin' && <RentTimeTable />}
+          </TabsContent>
+          <TabsContent value="docs">
+            {userStore.admin?.role === 'admin' && <AdminDocs />}
           </TabsContent>
         </Tabs>
       </main>

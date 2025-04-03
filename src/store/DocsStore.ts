@@ -36,8 +36,13 @@ class DocsStore {
   async fetchDocument(docType: "terms" | "privacy" | "cookie") {
     try {
       const data = await getDoc(docType);
-      // Обновляем состояние, если документ найден
-      this.docs[docType] = data.doc || null;
+      // API возвращает объект с полями { docType, content, path }
+      // Обновляем состояние, создавая объект с нужной структурой.
+      if (data.path) {
+        this.docs[docType] = { id: 0, docType, path: data.path };
+      } else {
+        this.docs[docType] = null;
+      }
       return data;
     } catch (error) {
       console.error("Error fetching document:", error);

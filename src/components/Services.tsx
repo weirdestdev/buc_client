@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { HardHat, ClipboardList, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import CreateMemberRequestModal from './CreateMemberRequestModal';
 
 type Service = {
   id: number;
@@ -37,7 +38,7 @@ const services: Service[] = [
 
 export default function Services() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <section id="services" className="bg-gray-100">
       <div className="text-center py-16">
@@ -88,6 +89,7 @@ export default function Services() {
                   <Button 
                     variant="outline" 
                     className="bg-transparent border border-white text-white hover:bg-white hover:text-black"
+                    onClick={() => setIsModalOpen(true)}
                   >
                     Get in touch
                   </Button>
@@ -97,6 +99,7 @@ export default function Services() {
           </div>
         ))}
       </div>
+      <CreateMemberRequestModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 }

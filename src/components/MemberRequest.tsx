@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import { observer } from 'mobx-react-lite';
 import {
   Table,
   TableBody,
@@ -15,52 +16,29 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Context } from '../main';
+import { IMemberRequest } from '@/store/MemberRequestsStore';
 
-interface MemberRequest {
-  id: number;
-  date: string; // дата и время отправки
-  memberName: string;
-  email: string;
-  message: string; // текст до 200 символов
-  status: 'new' | 'viewed' | 'completed';
-}
-
-const initialRequests: MemberRequest[] = [
-  {
-    id: 1,
-    date: '2025-04-01 10:30',
-    memberName: 'Иван Иванов',
-    email: 'ivan@mail.com',
-    message: 'Привет, мне нужна помощь с регистрацией. Сообщение ограничено 200 символами, оставшиеся символы показываются внизу поля.',
-    status: 'new',
-  },
-  {
-    id: 2,
-    date: '2025-04-02 14:15',
-    memberName: 'Мария Петрова',
-    email: 'maria@mail.com',
-    message: 'Хочу оставить отзыв по работе сайта. Текст сообщения до 200 символов, если превышает – ограничение не даст ввести больше.',
-    status: 'viewed',
-  },
-];
-
-const MemberRequest: React.FC = () => {
-  const [requests, setRequests] = useState<MemberRequest[]>(initialRequests);
-  const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
+const MemberRequests: React.FC = observer(() => {
+  const { memberRequestsStore } = useContext(Context)!;
+  const [selectedRequest, setSelectedRequest] = useState<IMemberRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Функция для изменения статуса заявки (из таблицы и модального окна)
-  const handleStatusChange = (id: number, newStatus: MemberRequest['status']) => {
-    setRequests((prev) =>
-      prev.map((req) => (req.id === id ? { ...req, status: newStatus } : req))
-    );
+  // При монтировании получаем список запросов
+  useEffect(() => {
+    memberRequestsStore.fetchRequests();
+  }, [memberRequestsStore]);
+
+  // Функция для обновления статуса через стор
+  const handleStatusChange = (id: number, newStatus: IMemberRequest['status']) => {
+    memberRequestsStore.changeRequestStatus(id, newStatus);
     if (selectedRequest && selectedRequest.id === id) {
       setSelectedRequest({ ...selectedRequest, status: newStatus });
     }
   };
 
-  // Открытие модального окна с подробной информацией заявки
-  const openModal = (request: MemberRequest) => {
+  // Открытие модального окна с подробной информацией
+  const openModal = (request: IMemberRequest) => {
     setSelectedRequest(request);
     setIsModalOpen(true);
   };
@@ -81,31 +59,32 @@ const MemberRequest: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {requests.map((req) => (
-              <TableRow key={req.id}>
-                <TableCell>{req.id}</TableCell>
-                <TableCell>{req.date}</TableCell>
-                <TableCell>{req.memberName}</TableCell>
-                <TableCell>{req.email}</TableCell>
-                <TableCell>
-                  <select
-                    value={req.status}
-                    onChange={(e) =>
-                      handleStatusChange(req.id, e.target.value as MemberRequest['status'])
-                    }
-                    className="border rounded p-1"
-                  >
-                    <option value="new">New</option>
-                    <option value="viewed">Viewed</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </TableCell>
-                <TableCell>
-                  <Button onClick={() => openModal(req)}>Details</Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {requests.length === 0 && (
+            {memberRequestsStore.requests.length > 0 ? (
+              memberRequestsStore.requests.map((req) => (
+                <TableRow key={req.id}>
+                  <TableCell>{req.id}</TableCell>
+                  <TableCell>{new Date(req.createdAt).toLocaleString()}</TableCell>
+                  <TableCell>{req.memberName}</TableCell>
+                  <TableCell>{req.email}</TableCell>
+                  <TableCell>
+                    <select
+                      value={req.status}
+                      onChange={(e) =>
+                        handleStatusChange(req.id, e.target.value as IMemberRequest['status'])
+                      }
+                      className="border rounded p-1"
+                    >
+                      <option value="new">New</option>
+                      <option value="viewed">Viewed</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </TableCell>
+                  <TableCell>
+                    <Button onClick={() => openModal(req)}>Details</Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                   No member requests.
@@ -128,7 +107,8 @@ const MemberRequest: React.FC = () => {
                 <strong>ID:</strong> {selectedRequest.id}
               </p>
               <p>
-                <strong>Date & Time:</strong> {selectedRequest.date}
+                <strong>Date & Time:</strong>{" "}
+                {new Date(selectedRequest.createdAt).toLocaleString()}
               </p>
               <p>
                 <strong>Member Name:</strong> {selectedRequest.memberName}
@@ -146,7 +126,7 @@ const MemberRequest: React.FC = () => {
                   onChange={(e) =>
                     handleStatusChange(
                       selectedRequest.id,
-                      e.target.value as MemberRequest['status']
+                      e.target.value as IMemberRequest['status']
                     )
                   }
                   className="ml-2 border rounded p-1"
@@ -165,6 +145,6 @@ const MemberRequest: React.FC = () => {
       </Dialog>
     </div>
   );
-};
+});
 
-export default MemberRequest;
+export default MemberRequests;

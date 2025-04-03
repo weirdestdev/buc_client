@@ -8,7 +8,6 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { Context } from '@/main';
@@ -21,7 +20,11 @@ const docsList = [
 
 const AdminDocs = () => {
   // Состояние для хранения выбранных файлов
-  const [files, setFiles] = useState({
+  const [files, setFiles] = useState<{
+    terms: File | null;
+    privacy: File | null;
+    cookie: File | null;
+  }>({
     terms: null,
     privacy: null,
     cookie: null,
@@ -33,10 +36,10 @@ const AdminDocs = () => {
   const [modalTitle, setModalTitle] = useState('');
 
   // Получаем DocsStore из контекста
-  const { docsStore } = useContext(Context);
+  const { docsStore } = useContext(Context)!;
 
   // Обработчик изменения файла для конкретного документа
-  const handleFileChange = (e, id) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, id: "terms" | "privacy" | "cookie") => {
     if (e.target.files && e.target.files[0]) {
       setFiles({ ...files, [id]: e.target.files[0] });
     }
@@ -45,7 +48,7 @@ const AdminDocs = () => {
   // Обработчик кнопки "Save" для загрузки выбранных файлов
   const handleSave = async () => {
     try {
-      for (const docType of Object.keys(files)) {
+      for (const docType of Object.keys(files) as ("terms" | "privacy" | "cookie")[]) {
         const file = files[docType];
         if (file) {
           await docsStore.uploadDocument(docType, file);
@@ -58,7 +61,7 @@ const AdminDocs = () => {
   };
 
   // Обработчик для чтения документа
-  const handleReadDoc = async (docId, title) => {
+  const handleReadDoc = async (docId: "terms" | "privacy" | "cookie", title: string) => {
     try {
       // Если запись существует, получаем путь к файлу
       const docRecord = docsStore.docs[docId];
@@ -93,13 +96,13 @@ const AdminDocs = () => {
                 <input
                   type="file"
                   accept=".txt"
-                  onChange={(e) => handleFileChange(e, doc.id)}
+                  onChange={(e) => handleFileChange(e, doc.id as "terms" | "privacy" | "cookie")}
                 />
               </TableCell>
               <TableCell>
                 {/* Если документ уже загружен, отображаем кнопку для чтения */}
-                {docsStore.docs[doc.id] && (
-                  <Button size="sm" variant="outline" onClick={() => handleReadDoc(doc.id, doc.title)}>
+                {docsStore.docs[doc.id as "terms" | "privacy" | "cookie"] && (
+                  <Button size="sm" variant="outline" onClick={() => handleReadDoc(doc.id as "terms" | "privacy" | "cookie", doc.title)}>
                     Read Document
                   </Button>
                 )}

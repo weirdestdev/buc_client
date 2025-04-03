@@ -399,7 +399,7 @@ const Admin = observer(() => {
             {userStore.admin?.role === 'admin' && <AdminDocs />}
           </TabsContent>
           <TabsContent value="member-requests">
-            {userStore.admin?.role === 'admin' || userStore.admin?.role === 'moderator' && <MemberRequests />}
+            {(userStore.admin?.role === 'admin' || userStore.admin?.role === 'moderator') && <MemberRequests />}
           </TabsContent>
         </Tabs>
       </main>

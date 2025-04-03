@@ -65,7 +65,7 @@ function PropertyDetailsDialog({
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { userStore } = useContext(Context);
   const isAuthenticated = userStore.isAuth;
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   if (!property) return null;
 
   const formatPrice = (price: number) => {
@@ -80,7 +80,7 @@ function PropertyDetailsDialog({
   const allImages = property.rentals_images.length
     ? property.rentals_images.map(img => img.image)
     : ["/default-image.jpg"];
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (<>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-screen overflow-y-auto">

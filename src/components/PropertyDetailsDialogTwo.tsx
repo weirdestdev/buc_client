@@ -25,6 +25,7 @@ import {
   CarouselPrevious
 } from '@/components/ui/carousel';
 import { Context } from '@/main';
+import CreateMemberRequestModal from './CreateMemberRequestModal';
 
 // Обновленный интерфейс, чтобы соответствовать JSON-данным
 interface RentalCustomData {
@@ -79,8 +80,8 @@ function PropertyDetailsDialog({
   const allImages = property.rentals_images.length
     ? property.rentals_images.map(img => img.image)
     : ["/default-image.jpg"];
-
-  return (
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  return (<>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-screen overflow-y-auto">
         <DialogHeader>
@@ -152,7 +153,7 @@ function PropertyDetailsDialog({
             <p className="text-muted-foreground text-sm">{property.description}</p>
           </div>
           <div className="flex justify-end">
-            <Button>
+            <Button onClick={() => setIsModalOpen(true)}>
               Request Viewing
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
@@ -160,7 +161,9 @@ function PropertyDetailsDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+    <CreateMemberRequestModal open={isModalOpen} onClose={() => setIsModalOpen(false)}/>
+    </>
+    );
 }
 
-export default observer(PropertyDetailsDialog);
+    export default observer(PropertyDetailsDialog);

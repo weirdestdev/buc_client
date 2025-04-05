@@ -3,12 +3,14 @@ import { $authHost } from "./index";
 // Функция для создания нового запроса пользователя
 export const createMemberRequest = async (
   memberName: string,
+  rentalName: string,
   email: string,
   message: string
 ) => {
-  const { data } = await $authHost.post("api/member-requests", { memberName, email, message });
+  const { data } = await $authHost.post("api/member-requests", { memberName, rentalName, email, message });
   return data;
 };
+
 
 // Функция для получения списка запросов пользователей
 export const getMemberRequests = async () => {

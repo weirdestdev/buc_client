@@ -53,6 +53,7 @@ const MemberRequests: React.FC = observer(() => {
               <TableHead>ID</TableHead>
               <TableHead>Date & Time</TableHead>
               <TableHead>Member Name</TableHead>
+              <TableHead>Rental Name</TableHead> {/* Новая колонка */}
               <TableHead>Email</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
@@ -65,6 +66,7 @@ const MemberRequests: React.FC = observer(() => {
                   <TableCell>{req.id}</TableCell>
                   <TableCell>{new Date(req.createdAt).toLocaleString()}</TableCell>
                   <TableCell>{req.memberName}</TableCell>
+                  <TableCell>{req.rentalName}</TableCell> {/* Отображение rentalName */}
                   <TableCell>{req.email}</TableCell>
                   <TableCell>
                     <select
@@ -86,7 +88,7 @@ const MemberRequests: React.FC = observer(() => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   No member requests.
                 </TableCell>
               </TableRow>
@@ -107,11 +109,13 @@ const MemberRequests: React.FC = observer(() => {
                 <strong>ID:</strong> {selectedRequest.id}
               </p>
               <p>
-                <strong>Date & Time:</strong>{" "}
-                {new Date(selectedRequest.createdAt).toLocaleString()}
+                <strong>Date & Time:</strong> {new Date(selectedRequest.createdAt).toLocaleString()}
               </p>
               <p>
                 <strong>Member Name:</strong> {selectedRequest.memberName}
+              </p>
+              <p>
+                <strong>Rental Name:</strong> {selectedRequest.rentalName}
               </p>
               <p>
                 <strong>Email:</strong> {selectedRequest.email}

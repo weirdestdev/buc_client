@@ -4,6 +4,7 @@ import { createMemberRequest, getMemberRequests, updateMemberRequest } from "../
 export interface IMemberRequest {
   id: number;
   memberName: string;
+  rentalName: string; // новое поле
   email: string;
   message: string;
   status: "new" | "viewed" | "completed";
@@ -29,10 +30,10 @@ class MemberRequestsStore {
     }
   }
 
-  // Метод для создания нового запроса
-  async addRequest(memberName: string, email: string, message: string) {
+  // Метод для создания нового запроса (с учетом поля rentalName)
+  async addRequest(memberName: string, rentalName: string, email: string, message: string) {
     try {
-      const data = await createMemberRequest(memberName, email, message);
+      const data = await createMemberRequest(memberName, rentalName, email, message);
       // Добавляем новый запрос в начало списка
       this.requests.unshift(data.request);
       return data;

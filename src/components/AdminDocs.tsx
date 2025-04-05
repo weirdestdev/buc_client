@@ -12,6 +12,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { Context } from '@/main';
+import * as Toast from '@radix-ui/react-toast';
 
 const docsList = [
   { id: 'terms', title: 'Terms & Conditions' },
@@ -29,7 +30,7 @@ const AdminDocs = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalText, setModalText] = useState('');
   const [modalTitle, setModalTitle] = useState('');
-
+  const [toastOpen, setToastOpen] = useState(false);
   const { docsStore } = useContext(Context)!;
 
   useEffect(() => {
@@ -55,12 +56,14 @@ const AdminDocs = () => {
       for (const docType of Object.keys(files) as ('terms' | 'privacy' | 'cookie')[]) {
         const file = files[docType];
         if (file) {
-          await docsStore.uploadDocument(docType, file);
+          await docsStore.uploadDocument(docType, file).catch((error) => {
+            console.error(`Error uploading ${docType}:`, error);
+          });
         }
       }
-      console.log('Документы успешно сохранены.');
+      setToastOpen(true);
     } catch (error) {
-      console.error('Ошибка при сохранении документов:', error);
+      console.error('Error saving documents:', error);
     }
   };
 
@@ -126,6 +129,29 @@ const AdminDocs = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Toast.Provider swipeDirection="right">
+        <Toast.Root
+          open={toastOpen}
+          onOpenChange={setToastOpen}
+          // Кастомные классы для позиционирования и стилизации (пример с TailwindCSS)
+          className="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-md shadow-lg"
+        >
+          <Toast.Title className="font-bold">Success</Toast.Title>
+          <Toast.Description className="mt-1">
+            Documents saved successfully.
+          </Toast.Description>
+          <Toast.Action asChild altText="Close">
+            <button
+              onClick={() => setToastOpen(false)}
+              className="ml-4 text-sm underline"
+            >
+              Close
+            </button>
+          </Toast.Action>
+        </Toast.Root>
+        <Toast.Viewport />
+      </Toast.Provider>
     </div>
   );
 };

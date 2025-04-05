@@ -14,14 +14,16 @@ import { Context } from "../main";
 interface CreateMemberRequestModalProps {
   open: boolean;
   onClose: () => void;
+  rentalName: string; // Принимаем rentalName как пропс
 }
 
 const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({
   open,
   onClose,
+  rentalName,
 }) => {
   const context = useContext(Context);
-  
+
   // Проверяем, что контекст существует
   if (!context) {
     console.error("Context is not available");
@@ -29,11 +31,13 @@ const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({
   }
 
   const { userStore, memberRequestsStore } = context;
-  
-  // Проверяем, что userStore.user существует, если нет, задаём пустые значения
-  const user = userStore.user || { fullname: "", email: "" };
 
-  const [email, setEmail] = useState(user.email);
+  // Проверяем, авторизован ли пользователь
+  const isAuthorized = !!userStore.user;
+
+  // Если пользователь авторизован, берем данные из userStore, иначе задаем пустые строки и позволяем ввод
+  const [fullName, setFullName] = useState(isAuthorized ? userStore.user.fullname : "");
+  const [email, setEmail] = useState(isAuthorized ? userStore.user.email : "");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,7 +49,8 @@ const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({
 
     try {
       setIsSubmitting(true);
-      await memberRequestsStore.addRequest(user.fullname, email, message);
+      // Передаем fullName (либо из userStore, либо введенное вручную), rentalName, email и message
+      await memberRequestsStore.addRequest(fullName, rentalName, email, message);
       onClose();
       setMessage("");
     } catch (error) {
@@ -62,6 +67,19 @@ const CreateMemberRequestModal: React.FC<CreateMemberRequestModalProps> = ({
           <DialogTitle>Send Member Request</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isAuthorized && (
+            <div>
+              <Label htmlFor="fullname">Full Name</Label>
+              <Input
+                id="fullname"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                placeholder="Enter your full name"
+              />
+            </div>
+          )}
           <div>
             <Label htmlFor="email">Email</Label>
             <Input

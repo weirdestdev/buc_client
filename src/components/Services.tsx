@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { HardHat, ClipboardList, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -99,7 +98,11 @@ export default function Services() {
           </div>
         ))}
       </div>
-      <CreateMemberRequestModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <CreateMemberRequestModal 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        rentalName="From Services block"
+      />
     </section>
   );
 }

@@ -73,9 +73,28 @@ const loginSchema = z.object({
 export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }: AuthDialogProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const { toast } = useToast();
-
+  const [docModalOpen, setDocModalOpen] = useState(false);
+  const [docModalText, setDocModalText] = useState('');
+  const [docModalTitle, setDocModalTitle] = useState('');
   // Получаем userStore из глобального контекста
-  const { userStore } = useContext(Context)!;
+  const { userStore, docsStore } = useContext(Context)!;
+
+  const handleDocModal = async (docType: 'terms' | 'privacy' | 'cookie', title: string) => {
+    try {
+      await docsStore.fetchDocument(docType);
+      const docRecord = docsStore.docs[docType];
+      if (docRecord && docRecord.path) {
+        const url = `${import.meta.env.VITE_SERVER_URL}${docRecord.path}`;
+        const response = await fetch(url);
+        const text = await response.text();
+        setDocModalText(text);
+        setDocModalTitle(title);
+        setDocModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Ошибка при чтении документа:', error);
+    }
+  };
 
   // Effect to update active tab when defaultTab changes
   useEffect(() => {
@@ -428,7 +447,13 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel className="text-sm font-normal">
-                            I accept the <a href="#" className="text-primary hover:underline">Terms & Conditions</a>, including the <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
+                            I accept the <a href="#" onClick={(e) => {
+                              e.preventDefault();
+                              handleDocModal('terms', 'Terms & Conditions');
+                            }} className="text-primary hover:underline">Terms & Conditions</a>, including the <a href="#" onClick={(e) => {
+                              e.preventDefault();
+                              handleDocModal('privacy', 'Privacy Policy');
+                            }} className="text-primary hover:underline">Privacy Policy</a>.
                           </FormLabel>
                           <FormMessage />
                         </div>

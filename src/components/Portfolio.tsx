@@ -150,7 +150,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
   
 
   return (
-    <section id="rentals" className="section-padding bg-white w-full overflow-hidden">
+    <section id="portfolio" className="section-padding bg-white w-full overflow-hidden">
       <div className="container mx-auto px-0 sm:px-4">
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-display font-semibold mb-4">Rentals</h2>

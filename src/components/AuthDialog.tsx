@@ -244,7 +244,7 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
                     />
 
                     <Button type="submit" className="w-full" disabled={loginForm.formState.isSubmitting}>
-                      {loginForm.formState.isSubmitting ? "Signing in..." : "Sign in"}
+                      {loginForm.formState.isSubmitting ? "Signing in..." : "Log in"}
                     </Button>
                   </form>
                 </Form>

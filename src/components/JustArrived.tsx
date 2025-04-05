@@ -143,8 +143,8 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           </div>
           <div className="flex justify-between items-center mt-4">
             <div className="font-display text-lg font-medium flex items-center">
-              <EuroIcon className="w-5 h-5 mr-1 flex-shrink-0" />
               {formatPrice(property.price)}
+              <EuroIcon className="w-5 h-5 ml-1 flex-shrink-0" />
             </div>
             {(bedroomsField || bathroomsField) && (
               <div className="text-sm text-muted-foreground flex items-center space-x-2">
@@ -175,7 +175,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-display font-semibold mb-4">Our Portfolio</h2>
           <p className="text-muted-foreground">
-            Explore our newest properties for sale that have just been added to our exclusive collection
+            Explore our newest properties for sale that have just been added to our hand-picked collection
           </p>
         </div>
 

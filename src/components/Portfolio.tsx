@@ -121,8 +121,8 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
           </div>
           <div className="flex justify-between items-center mt-4">
             <div className="font-display text-lg font-medium flex items-center">
-              <EuroIcon className="w-5 h-5 mr-1" />
               {formatPrice(property.price)}
+              <EuroIcon className="w-5 h-5 ml-1 mr-1" />
               <span className="text-sm text-muted-foreground ml-1">/{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}</span>
             </div>
             {(bedroomsField || bathroomsField) && (
@@ -217,7 +217,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
               backgroundSize: "200% 200%"
             }}>
               <div className="p-8">
-                <h3 className="text-xl font-display font-medium mb-2">See More Properties</h3>
+                <h3 className="text-xl font-display font-medium mb-2">See More Options</h3>
                 <p className="text-muted-foreground mb-4">
                   Create an account to access our full portfolio of exclusive properties
                 </p>

@@ -126,8 +126,8 @@ function PropertyDetailsDialog({
               <div className="bg-secondary rounded-md p-3 text-center">
                 <div className="text-sm text-muted-foreground">Price</div>
                 <div className="font-display font-medium flex items-center justify-center mt-1">
-                  <Euro className="w-4 h-4 mr-1" />
                   {formatPrice(property.price)}
+                  <Euro className="w-4 h-4 ml-1" />
                 </div>
               </div>
 

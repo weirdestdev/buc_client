@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, ArrowRight, Lock, Bold } from 'lucide-react';
+import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, ArrowRight, Lock, Settings  } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -104,13 +104,13 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
             <h3 className="font-medium text-lg">{property.name}</h3>
           </div>
           <div className="flex items-center text-muted-foreground text-sm mb-4">
-            <Bold className="w-4 h-4 mr-1 flex-shrink-0" />
+            <Settings className="w-4 h-4 mr-1 flex-shrink-0" />
             <span>{property.description}</span>
           </div>
           <div className="flex justify-between items-center mt-4">
             <div className="font-display text-lg font-medium flex items-center">
-              <EuroIcon className="w-5 h-5 mr-1" />
               {formatPrice(property.price)}
+              <EuroIcon className="w-5 h-5 ml-1 mr-1" />
               <span className="text-sm text-muted-foreground ml-1">
                 /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
               </span>
@@ -192,7 +192,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
               backgroundSize: "200% 200%"
             }}>
               <div className="p-8">
-                <h3 className="text-xl font-display font-medium mb-2">See More Properties</h3>
+                <h3 className="text-xl font-display font-medium mb-2">See More Options</h3>
                 <p className="text-muted-foreground mb-4">
                   Create an account to access our full portfolio of exclusive properties
                 </p>

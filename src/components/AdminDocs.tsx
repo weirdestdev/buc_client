@@ -134,6 +134,7 @@ const AdminDocs = () => {
         <Toast.Root
           open={toastOpen}
           onOpenChange={setToastOpen}
+          duration={1500}
           // Кастомные классы для позиционирования и стилизации (пример с TailwindCSS)
           className="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-md shadow-lg"
         >

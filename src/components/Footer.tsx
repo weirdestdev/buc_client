@@ -28,7 +28,9 @@ export default function Footer() {
         const url = `${import.meta.env.VITE_SERVER_URL}${docRecord.path}`;
         const response = await fetch(url);
         const text = await response.text();
-        setModalText(text);
+        // Обработка текста: замена литеральных "\r\n" и "\n" на реальные символы перевода строки
+        const processedText = text.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n');
+        setModalText(processedText);
         setModalTitle(title);
         setModalOpen(true);
       }

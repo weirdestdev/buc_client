@@ -155,7 +155,7 @@ function PropertyDetailsDialog({
             </div>
             <div className="flex justify-end">
               <Button onClick={() => setIsModalOpen(true)}>
-                Make a Booking Request
+                Request Viewing
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>

@@ -74,7 +74,9 @@ const AdminDocs = () => {
         const url = `${import.meta.env.VITE_SERVER_URL}${docRecord.path}`;
         const response = await fetch(url);
         const text = await response.text();
-        setModalText(text);
+        // Обработка текста: замена литералов "\r\n" и "\n" на реальные символы перевода строки
+        const processedText = text.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n');
+        setModalText(processedText);
         setModalTitle(title);
         setModalOpen(true);
       }
@@ -135,18 +137,12 @@ const AdminDocs = () => {
           open={toastOpen}
           onOpenChange={setToastOpen}
           duration={1500}
-          // Кастомные классы для позиционирования и стилизации (пример с TailwindCSS)
           className="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-md shadow-lg"
         >
           <Toast.Title className="font-bold">Success</Toast.Title>
-          <Toast.Description className="mt-1">
-            Documents saved successfully.
-          </Toast.Description>
+          <Toast.Description className="mt-1">Documents saved successfully.</Toast.Description>
           <Toast.Action asChild altText="Close">
-            <button
-              onClick={() => setToastOpen(false)}
-              className="ml-4 text-sm underline"
-            >
+            <button onClick={() => setToastOpen(false)} className="ml-4 text-sm underline">
               Close
             </button>
           </Toast.Action>

@@ -74,18 +74,21 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
 
   const handleDocOpen = async (docType: 'terms' | 'privacy' | 'cookie', title: string) => {
     try {
+      // Получаем документ через fetchDocument (если еще не получен, или обновляем)
       await docsStore.fetchDocument(docType);
       const docRecord = docsStore.docs[docType];
       if (docRecord && docRecord.path) {
         const url = `${import.meta.env.VITE_SERVER_URL}${docRecord.path}`;
         const response = await fetch(url);
         const text = await response.text();
-        setModalText(text);
+        // Обработка текста: замена литеральных "\r\n" и "\n" на реальные символы перевода строки
+        const processedText = text.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n');
+        setModalText(processedText);
         setModalTitle(title);
         setModalOpen(true);
       }
     } catch (error) {
-      console.error('Error loading document:', error);
+      console.error('Ошибка при чтении документа:', error);
     }
   };
 

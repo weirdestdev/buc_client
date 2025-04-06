@@ -28,7 +28,7 @@ const services: Service[] = [
   },
   {
     id: 3,
-    title: "Legal Assessment",
+    title: "Legal Consulting",
     icon: <Scale className="w-12 h-12" />,
     description: "Comprehensive legal guidance for property transactions, permits, and regulatory compliance.",
     backgroundImage: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
@@ -39,6 +39,7 @@ export default function Services() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState(''); // новое состояние для выбранной услуги
   const serviceRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
@@ -64,6 +65,12 @@ export default function Services() {
       });
     };
   }, []);
+
+  // Функция для открытия модалки с названием услуги
+  const handleGetInTouch = (serviceTitle: string) => {
+    setSelectedService(`${serviceTitle} Service`);
+    setIsModalOpen(true);
+  };
 
   return (
     <section id="services" className="bg-gray-100">
@@ -102,7 +109,7 @@ export default function Services() {
               <Button
                 variant="outline"
                 className="bg-transparent border border-white text-white hover:bg-white hover:text-black"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => handleGetInTouch(service.title)}
               >
                 Get in touch
               </Button>
@@ -152,7 +159,7 @@ export default function Services() {
                   <Button
                     variant="outline"
                     className="bg-transparent border border-white text-white hover:bg-white hover:text-black"
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => handleGetInTouch(service.title)}
                   >
                     Get in touch
                   </Button>
@@ -166,7 +173,7 @@ export default function Services() {
       <CreateMemberRequestModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        rentalName="From Services block"
+        rentalName={selectedService || "Request from services block"}
       />
     </section>
   );

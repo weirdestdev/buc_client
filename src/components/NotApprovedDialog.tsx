@@ -24,8 +24,12 @@ const NotApprovedDialog: React.FC<NotApprovedDialogProps> = ({ open, onOpenChang
             Please wait while an administrator approves your account.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex justify-center mt-6">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="w-full max-w-xs"
+          >
             Close
           </Button>
         </div>

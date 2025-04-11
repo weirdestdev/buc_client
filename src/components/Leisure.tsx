@@ -113,7 +113,6 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
             <h3 className="font-medium text-lg">{property.name}</h3>
           </div>
           <div className="flex items-center text-muted-foreground text-sm mb-4">
-            <Settings className="w-4 h-4 mr-1 flex-shrink-0" />
             <span>{property.description}</span>
           </div>
           <div className="flex justify-between items-center mt-4">

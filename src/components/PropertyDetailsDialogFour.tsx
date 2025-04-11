@@ -135,21 +135,23 @@ function PropertyDetailsDialog({
               </div>
 
               {/* Доступность и другие параметры */}
-              {property.rental_custom_data.map((item) => (
-                <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
-                  <div className="text-sm text-muted-foreground">{item.categories_datum.name}</div>
-                  <div className="font-display font-medium flex items-center justify-center mt-1">
-                    {item.categories_datum.name === "Peoples" ? (
-                      <Users className="w-4 h-4 mr-1" />
-                    ) : item.categories_datum.name === "Beds" ? (
-                      <Bed className="w-4 h-4 mr-1" />
-                    ) : null}
-                    {item.value}
-                    {(item.categories_datum.name.includes("Plot Area") ||
-                      item.categories_datum.name.includes("Living Area")) && " m²"}
+              {property.rental_custom_data
+                .filter(item => item.value && item.value !== "0")
+                .map((item) => (
+                  <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
+                    <div className="text-sm text-muted-foreground">{item.categories_datum.name}</div>
+                    <div className="font-display font-medium flex items-center justify-center mt-1">
+                      {item.categories_datum.name === "Peoples" ? (
+                        <Users className="w-4 h-4 mr-1" />
+                      ) : item.categories_datum.name === "Beds" ? (
+                        <Bed className="w-4 h-4 mr-1" />
+                      ) : null}
+                      {item.value}
+                      {(item.categories_datum.name.includes("Plot Area") ||
+                        item.categories_datum.name.includes("Living Area")) && " m²"}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
               <div className="bg-secondary rounded-md p-3 text-center">
                 <div className="text-sm text-muted-foreground">Type</div>

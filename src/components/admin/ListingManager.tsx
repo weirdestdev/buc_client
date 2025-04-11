@@ -59,6 +59,7 @@ const ListingManager = observer(() => {
 
   // Состояния для загрузки новых файлов и кастомных полей
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
+  const [pdfField, setPdfField] = useState<File | null>(null);
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
 
   // Состояние для управления миниатюрами (существующими изображениями)
@@ -101,6 +102,7 @@ const ListingManager = observer(() => {
       rentTimeId: '',
     });
     setFileFields([]);
+    setPdfField(null);
     setCustomFieldsValues({});
     setExistingImages([]);
     setIsDialogOpen(true);
@@ -123,18 +125,19 @@ const ListingManager = observer(() => {
     setCustomFieldsValues(
       listing.rental_custom_data
         ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
-          acc[curr.categoriesDataId] = curr.value;
-          return acc;
-        }, {})
+            acc[curr.categoriesDataId] = curr.value;
+            return acc;
+          }, {})
         : {}
     );
     // Загружаем миниатюры из объявления (существующие изображения)
     setExistingImages(listing.rentals_images || []);
     setFileFields([]);
+    setPdfField(null);
     setIsDialogOpen(true);
   };
 
-  // Добавление нового поля для загрузки файла
+  // Добавление нового поля для загрузки файлов (изображения)
   const addFileField = () => {
     setFileFields([...fileFields, null]);
   };
@@ -234,7 +237,11 @@ const ListingManager = observer(() => {
                 onChange={(e) =>
                   setCustomFieldsValues({ ...customFieldsValues, [field.id]: e.target.value })
                 }
-                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
+                onFocus={(e) =>
+                  e.target.addEventListener("wheel", function (e) {
+                    e.preventDefault();
+                  }, { passive: false })
+                }
                 placeholder={`Enter ${field.name}`}
               />
             </div>
@@ -307,11 +314,16 @@ const ListingManager = observer(() => {
           }
         });
       } else {
-        const updatedImages = existingImages.map(img => ({
+        const updatedImages = existingImages.map((img) => ({
           id: img.id,
           image: img.image,
         }));
         form.append('updatedImages', JSON.stringify(updatedImages));
+      }
+
+      // Если выбран PDF-файл, добавляем его в форму
+      if (pdfField) {
+        form.append('pdf', pdfField);
       }
 
       if (editingListing) {
@@ -321,6 +333,7 @@ const ListingManager = observer(() => {
       }
       await rentTimeStore.loadRentals();
       setFileFields([]);
+      setPdfField(null);
     } catch (error) {
       console.error("Ошибка создания объявления:", error);
     } finally {
@@ -589,6 +602,31 @@ const ListingManager = observer(() => {
               )}
             {/* Кастомные поля */}
             {renderCustomFields()}
+            {/* Поле для загрузки PDF */}
+            <div className="space-y-2">
+              <Label htmlFor="pdf">PDF File</Label>
+              {editingListing && editingListing.pdfLink && (
+                <div className="flex items-center gap-2">
+                  <span>File is already attached to this listing</span>
+                  <Button variant="link" onClick={() => window.open(editingListing.pdfLink, '_blank')}>
+                    Read
+                  </Button>
+                </div>
+              )}
+              <Input
+                id="pdf"
+                type="file"
+                accept="application/pdf"
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setPdfField(e.target.files[0]);
+                  } else {
+                    setPdfField(null);
+                  }
+                }}
+                onFocus={(e) => e.target.addEventListener("wheel", (e) => e.preventDefault(), { passive: false })}
+              />
+            </div>
             {/* Загрузка изображений / миниатюр */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>

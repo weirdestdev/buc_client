@@ -3,8 +3,6 @@ import { useLocation } from 'react-router-dom';
 import {
   ArrowDownAZ,
   ArrowUpAZ,
-  Building,
-  Home,
   MapPin,
   EuroIcon,
   Bed,
@@ -14,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialogTwo';
+import NotApprovedDialog from '@/components/NotApprovedDialog';
 import { useAuth } from '@/context/AuthContext';
 import { Context } from '@/main';
 
@@ -30,8 +29,8 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
+  const [notApprovedDialogOpen, setNotApprovedDialogOpen] = useState(false);
 
-  const { getFeaturedJustArrivedListings } = useAuth();
   const { rentTimeStore, userStore } = useContext(Context)!;
 
   useEffect(() => {
@@ -46,7 +45,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       }
 
       // Формируем массив уникальных категорий
-      const uniqueCategoriesMap = {};
+      const uniqueCategoriesMap: any = {};
       properties.forEach(property => {
         if (property.category && !uniqueCategoriesMap[property.category.id]) {
           uniqueCategoriesMap[property.category.id] = property.category;
@@ -82,14 +81,20 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const handlePropertyClick = (property: any) => {
-    if (!userStore.isAuth || (userStore.user && userStore.user.status !== 'approved')) {
+    // Если пользователь не аутентифицирован – открываем окно регистрации
+    if (!userStore.isAuth) {
       if (openAuthDialog) openAuthDialog("register");
       return;
     }
+    // Если пользователь аутентифицирован, но его статус не "approved" – открываем окно NotApprovedDialog
+    if (userStore.user && userStore.user.status !== 'approved') {
+      setNotApprovedDialogOpen(true);
+      return;
+    }
+    // Иначе открываем модальное окно с подробностями объявления
     setSelectedProperty(property);
     setPropertyDialogOpen(true);
   };
-  
 
   const renderPropertyCard = (property: any) => {
     const bedroomsField = property.rental_custom_data?.find((item: any) => {
@@ -125,7 +130,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
               />
             )}
           </div>
-          {!userStore.isAuth && (
+          {userStore.user?.status !== 'approved' && (
             <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
               <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">
                 <Lock className="w-4 h-4 text-primary mr-2" />
@@ -194,18 +199,13 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${selectedCategory === cat.id ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"
-                    }`}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-1 md:flex-none ${selectedCategory === cat.id ? "bg-primary text-white" : "hover:bg-secondary-foreground/10"}`}
                 >
                   <img
                     src={`${import.meta.env.VITE_SERVER_URL}${cat.icon}`}
                     alt={cat.name}
                     className="inline-block w-4 h-4 mr-1"
-                    style={
-                      selectedCategory === cat.id
-                        ? { filter: 'brightness(0) invert(1)' }
-                        : {}
-                    }
+                    style={selectedCategory === cat.id ? { filter: 'brightness(0) invert(1)' } : {}}
                   />
                   {cat.name}
                 </button>
@@ -243,6 +243,9 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
         open={propertyDialogOpen}
         onOpenChange={setPropertyDialogOpen}
       />
+
+      {/* Встраиваем диалог для неподтверждённого аккаунта */}
+      <NotApprovedDialog open={notApprovedDialogOpen} onOpenChange={setNotApprovedDialogOpen} />
     </section>
   );
 }

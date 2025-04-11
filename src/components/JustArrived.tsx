@@ -82,13 +82,14 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   };
 
   const handlePropertyClick = (property: any) => {
-    if (!userStore.isAuth && openAuthDialog) {
-      openAuthDialog("register");
+    if (!userStore.isAuth || (userStore.user && userStore.user.status !== 'approved')) {
+      if (openAuthDialog) openAuthDialog("register");
       return;
     }
     setSelectedProperty(property);
     setPropertyDialogOpen(true);
   };
+  
 
   const renderPropertyCard = (property: any) => {
     const bedroomsField = property.rental_custom_data?.find((item: any) => {

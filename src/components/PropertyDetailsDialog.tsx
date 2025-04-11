@@ -265,7 +265,7 @@ function PropertyDetailsDialog({
             </div>
             
             <div>
-              <h4 className="font-medium mb-2">About this property</h4>
+              <h4 className="font-medium mb-2">Description</h4>
               {property.description ? (
                 <p className="text-muted-foreground text-sm">{property.description}</p>
               ) : (

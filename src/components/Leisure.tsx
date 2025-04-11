@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialogFour';
 import { Context } from '@/main';
+import NotApprovedDialog from './NotApprovedDialog';
 
 interface RentalsProps {
   openAuthDialog?: (tab: "login" | "register") => void;
@@ -21,6 +22,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
   const { rentTimeStore, userStore } = useContext(Context)!;
+  const [notApprovedDialogOpen, setNotApprovedDialogOpen] = useState(false);
 
   useEffect(() => {
     async function loadProperties() {
@@ -63,11 +65,18 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
     setLoadedImages(prev => ({ ...prev, [id]: true }));
   };
 
-  const handlePropertyClick = (property: any) => {
-    if (!userStore.isAuth && openAuthDialog) {
-      openAuthDialog("register");
+ const handlePropertyClick = (property: any) => {
+    // Если пользователь не аутентифицирован – открываем окно регистрации
+    if (!userStore.isAuth) {
+      if (openAuthDialog) openAuthDialog("register");
       return;
     }
+    // Если пользователь аутентифицирован, но его статус не "approved" – открываем окно NotApprovedDialog
+    if (userStore.user && userStore.user.status !== 'approved') {
+      setNotApprovedDialogOpen(true);
+      return;
+    }
+    // Иначе открываем модальное окно с подробностями объявления
     setSelectedProperty(property);
     setPropertyDialogOpen(true);
   };
@@ -207,6 +216,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
       </div>
 
       <PropertyDetailsDialog property={selectedProperty} open={propertyDialogOpen} onOpenChange={setPropertyDialogOpen} />
+      <NotApprovedDialog open={notApprovedDialogOpen} onOpenChange={setNotApprovedDialogOpen} />
     </section>
   );
 }

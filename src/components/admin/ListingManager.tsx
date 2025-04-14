@@ -163,17 +163,19 @@ const ListingManager = observer(() => {
           const img = imgObj.image;
           return (
             <div key={imgObj.id} className="relative">
+              {/* Изменили размеры изображения с h-12 w-12 на h-24 w-24 */}
               <img
                 src={img.startsWith('http') ? img : `${SERVER_URL}${img}`}
                 alt={`listing-${index}`}
-                className="h-12 w-12 object-cover rounded"
+                className="h-24 w-24 object-cover rounded"
               />
+              {/* Изменили размеры кнопки удаления */}
               <button
                 type="button"
                 onClick={() =>
                   setExistingImages(existingImages.filter((i) => i.id !== imgObj.id))
                 }
-                className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs p-0.5"
+                className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-sm px-2 py-1"
               >
                 X
               </button>
@@ -186,7 +188,8 @@ const ListingManager = observer(() => {
                       [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
                       setExistingImages(updated);
                     }}
-                    className="bg-gray-300 text-xs rounded mb-1"
+                    // Изменили размеры кнопки стрелки вверх: увеличен размер текста и добавлены отступы
+                    className="bg-gray-300 text-sm rounded mb-1 px-2 py-1"
                   >
                     ↑
                   </button>
@@ -199,7 +202,8 @@ const ListingManager = observer(() => {
                       [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
                       setExistingImages(updated);
                     }}
-                    className="bg-gray-300 text-xs rounded"
+                    // Изменили размеры кнопки стрелки вниз
+                    className="bg-gray-300 text-sm rounded px-2 py-1"
                   >
                     ↓
                   </button>
@@ -210,7 +214,7 @@ const ListingManager = observer(() => {
         })}
       </div>
     );
-  };
+  };  
 
   const renderCustomFields = () => {
     if (!formData.categoryId) return null;

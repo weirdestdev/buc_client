@@ -123,13 +123,15 @@ function PropertyDetailsDialog({
             {/* Блок информации */}
             <div className="grid grid-cols-2 gap-4">
               {/* Цена */}
-              <div className="bg-secondary rounded-md p-3 text-center">
-                <div className="text-sm text-muted-foreground">Price</div>
-                <div className="font-display font-medium flex items-center justify-center mt-1">
-                  {formatPrice(property.price)}
-                  <Euro className="w-4 h-4 ml-1" />
+              {property.price !== 0 && (
+                <div className="bg-secondary rounded-md p-3 text-center">
+                  <div className="text-sm text-muted-foreground">Price</div>
+                  <div className="font-display font-medium flex items-center justify-center mt-1">
+                    {formatPrice(property.price)}
+                    <Euro className="w-4 h-4 ml-1" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Доступность и другие параметры */}
               {property.rental_custom_data

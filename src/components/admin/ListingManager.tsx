@@ -279,7 +279,7 @@ const ListingManager = observer(() => {
           formData.status.toLowerCase() === 'leisure')
           ? formData.unit_of_numeration
           : null;
-      form.append('unit_of_numeration', JSON.stringify(unitValue));
+      form.append('unit_of_numeration', unitValue);
 
       form.append('status', formData.status);
       form.append('featured', JSON.stringify(formData.featured));

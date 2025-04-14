@@ -148,7 +148,7 @@ function PropertyDetailsDialog({
                         item.categories_datum.name.includes("Living Area")) && " m²"}
                     </div>
                   </div>
-              ))}
+                ))}
             </div>
 
             <div>

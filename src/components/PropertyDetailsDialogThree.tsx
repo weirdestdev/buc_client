@@ -126,11 +126,17 @@ function PropertyDetailsDialog({
               <div className="bg-secondary rounded-md p-3 text-center">
                 <div className="text-sm text-muted-foreground">Price</div>
                 <div className="font-display font-medium flex items-center justify-center mt-1">
-                  {formatPrice(property.price)}
-                  <Euro className="w-4 h-4 ml-1 mr-1" />
-                  <span className="text-sm text-muted-foreground ml-1">
-                    /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
-                  </span>
+                  {property.price === 0 ? (
+                    "Price on Request"
+                  ) : (
+                    <>
+                      {formatPrice(property.price)}
+                      <Euro className="w-4 h-4 ml-1 mr-1" />
+                      <span className="text-sm text-muted-foreground ml-1">
+                        /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -151,7 +157,7 @@ function PropertyDetailsDialog({
                         item.categories_datum.name.includes("Living Area")) && " m²"}
                     </div>
                   </div>
-              ))}
+                ))}
 
               <div className="bg-secondary rounded-md p-3 text-center">
                 <div className="text-sm text-muted-foreground">Type</div>

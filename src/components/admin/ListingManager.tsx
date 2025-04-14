@@ -24,6 +24,7 @@ import { Context } from '../../main';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
+// Добавляем новое поле priceOnRequest
 interface IListFormData {
   name: string;
   description: string;
@@ -34,6 +35,7 @@ interface IListFormData {
   featured: boolean;
   categoryId: string;
   rentTimeId: string;
+  priceOnRequest: boolean;
 }
 
 type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
@@ -55,16 +57,15 @@ const ListingManager = observer(() => {
     featured: false,
     categoryId: '',
     rentTimeId: '',
+    priceOnRequest: false,
   });
 
   // Состояния для загрузки новых файлов и кастомных полей
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
-
   // Состояние для управления миниатюрами (существующими изображениями)
   const [existingImages, setExistingImages] = useState<any[]>([]);
-
-  // Состояние загрузки для предотвращения дубликатов и блокировки UI
+  // Состояние загрузки
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -99,6 +100,7 @@ const ListingManager = observer(() => {
       featured: false,
       categoryId: '',
       rentTimeId: '',
+      priceOnRequest: false,
     });
     setFileFields([]);
     setCustomFieldsValues({});
@@ -119,16 +121,17 @@ const ListingManager = observer(() => {
       featured: listing.featured || false,
       categoryId: listing.categoryId?.toString() || '',
       rentTimeId: listing.rentTimeId?.toString() || '',
+      // Если цена равна 0, считаем, что включён Price on Request
+      priceOnRequest: listing.price === 0,
     });
     setCustomFieldsValues(
       listing.rental_custom_data
         ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
           acc[curr.categoriesDataId] = curr.value;
           return acc;
-        }, {})
+        }, {} )
         : {}
     );
-    // Загружаем миниатюры из объявления (существующие изображения)
     setExistingImages(listing.rentals_images || []);
     setFileFields([]);
     setIsDialogOpen(true);
@@ -148,7 +151,6 @@ const ListingManager = observer(() => {
     }
   };
 
-  // Отрисовка миниатюр с кнопками удаления и изменения порядка
   const renderExistingImages = () => {
     if (existingImages.length === 0) return null;
     return (
@@ -162,7 +164,6 @@ const ListingManager = observer(() => {
                 alt={`listing-${index}`}
                 className="h-12 w-12 object-cover rounded"
               />
-              {/* Кнопка удаления */}
               <button
                 type="button"
                 onClick={() => setExistingImages(existingImages.filter((img) => img.id !== imgObj.id))}
@@ -170,12 +171,17 @@ const ListingManager = observer(() => {
               >
                 X
               </button>
-              {/* Кнопки для изменения порядка */}
               <div className="flex flex-col absolute left-0 top-0">
                 {index > 0 && (
                   <button
                     type="button"
-                    onClick={() => moveExistingImage(index, index - 1)}
+                    onClick={() => {
+                      const updated = [...existingImages];
+                      const temp = updated[index];
+                      updated[index] = updated[index - 1];
+                      updated[index - 1] = temp;
+                      setExistingImages(updated);
+                    }}
                     className="bg-gray-300 text-xs rounded mb-1"
                   >
                     ↑
@@ -184,7 +190,13 @@ const ListingManager = observer(() => {
                 {index < existingImages.length - 1 && (
                   <button
                     type="button"
-                    onClick={() => moveExistingImage(index, index + 1)}
+                    onClick={() => {
+                      const updated = [...existingImages];
+                      const temp = updated[index];
+                      updated[index] = updated[index + 1];
+                      updated[index + 1] = temp;
+                      setExistingImages(updated);
+                    }}
                     className="bg-gray-300 text-xs rounded"
                   >
                     ↓
@@ -198,16 +210,6 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Функция для смены позиций миниатюр
-  const moveExistingImage = (from: number, to: number) => {
-    const updated = [...existingImages];
-    const temp = updated[from];
-    updated[from] = updated[to];
-    updated[to] = temp;
-    setExistingImages(updated);
-  };
-
-  // Отрисовка кастомных полей, зависящих от выбранной категории
   const renderCustomFields = () => {
     if (!formData.categoryId) return null;
     const selectedCategory = categoriesStore.categories.find(
@@ -234,7 +236,7 @@ const ListingManager = observer(() => {
                 onChange={(e) =>
                   setCustomFieldsValues({ ...customFieldsValues, [field.id]: e.target.value })
                 }
-                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false })}
                 placeholder={`Enter ${field.name}`}
               />
             </div>
@@ -244,7 +246,6 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Вычисляем список категорий для селекта в зависимости от значения formData.status
   const filteredCategories = categoriesStore.categories.filter((cat: any) => {
     const status = formData.status.toLowerCase();
     const catName = cat.name.toLowerCase();
@@ -256,14 +257,13 @@ const ListingManager = observer(() => {
     return true;
   });
 
-  // Сохранение объявления с немедленным закрытием диалога
   const handleSaveListing = async () => {
-    if (!formData.name || !formData.price) {
+    // Если Price on Request не выбран, проверяем обязательное поле Price
+    if (!formData.name || (!formData.priceOnRequest && !formData.price)) {
       alert("Введите обязательные поля: Title и Price");
       return;
     }
 
-    // Закрываем диалог сразу, чтобы пользователь не мог повторно нажимать
     setIsDialogOpen(false);
     setIsLoading(true);
 
@@ -272,20 +272,19 @@ const ListingManager = observer(() => {
       form.append('name', formData.name);
       form.append('description', formData.description);
       form.append('address', formData.address);
-      form.append('price', formData.price);
+      // Если Price on Request включён, передаём 0, иначе передаём введённое значение
+      form.append('price', formData.priceOnRequest ? '0' : formData.price);
 
-      const unitValue =
-        (formData.status.toLowerCase() === 'rentals' ||
-          formData.status.toLowerCase() === 'leisure')
-          ? formData.unit_of_numeration
-          : null;
-      form.append('unit_of_numeration', unitValue);
+      // Если цена не на запрос, добавляем Price Period (только для категорий Rentals или Leisure)
+      if (!formData.priceOnRequest && (formData.status.toLowerCase() === 'rentals' ||
+          formData.status.toLowerCase() === 'leisure')) {
+        form.append('unit_of_numeration', formData.unit_of_numeration);
+      }
 
       form.append('status', formData.status);
       form.append('featured', JSON.stringify(formData.featured));
       form.append('categoryId', formData.categoryId);
 
-      // Если основная категория Our Portfolio или Leisure, rentTimeId не добавляем
       if (
         formData.status.toLowerCase() !== 'our portfolio' &&
         formData.status.toLowerCase() !== 'leisure'
@@ -293,7 +292,6 @@ const ListingManager = observer(() => {
         form.append('rentTimeId', formData.rentTimeId);
       }
 
-      // Остальные данные (customData, изображения и т.д.)
       const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
         categoriesDataId: fieldId,
         value,
@@ -359,7 +357,6 @@ const ListingManager = observer(() => {
     );
   };
 
-  // Если категория объявления не поддерживает rent time, возвращаем "-"
   const renderRentTime = (listing: any) => {
     if (
       listing.status?.toLowerCase() === "our portfolio" ||
@@ -372,7 +369,6 @@ const ListingManager = observer(() => {
 
   return (
     <div className="space-y-6">
-      {/* Оверлей загрузки */}
       {isLoading && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[10000]"
@@ -382,7 +378,6 @@ const ListingManager = observer(() => {
         </div>
       )}
 
-      {/* Вкладки для сортировки */}
       <div className="flex space-x-4">
         {(['Our Portfolio', 'Rentals', 'Leisure'] as ActiveTab[]).map((tab) => (
           <Button
@@ -467,8 +462,8 @@ const ListingManager = observer(() => {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Listing Title"
-                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
                 required
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false })}
               />
             </div>
             {/* Location */}
@@ -479,35 +474,50 @@ const ListingManager = observer(() => {
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="Location"
-                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
                 required
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false })}
               />
             </div>
-            {/* Price */}
+            {/* Чекбокс Price on Request */}
             <div className="space-y-2">
-              <Label htmlFor="price">Price *</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="Price"
-                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
-                required
-              />
-            </div>
-            {/* Price Period для категорий Rentals или Leisure */}
-            {(formData.status.toLowerCase() === "rentals" || formData.status.toLowerCase() === "leisure") && (
-              <div className="space-y-2">
-                <Label htmlFor="unit_of_numeration">Price Period</Label>
-                <Input
-                  id="unit_of_numeration"
-                  value={formData.unit_of_numeration}
-                  onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
-                  placeholder="Price Period (e.g. Month, Week, Day)"
-                  onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
+              <Label>
+                <input
+                  type="checkbox"
+                  checked={formData.priceOnRequest}
+                  onChange={(e) => setFormData({ ...formData, priceOnRequest: e.target.checked })}
+                  className="mr-2"
                 />
-              </div>
+                Price on Request
+              </Label>
+            </div>
+            {/* Отображаем Price и Price Period только если не выбран Price on Request */}
+            {!formData.priceOnRequest && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price *</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    placeholder="Price"
+                    required
+                    onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false })}
+                  />
+                </div>
+                {(formData.status.toLowerCase() === "rentals" || formData.status.toLowerCase() === "leisure") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="unit_of_numeration">Price Period</Label>
+                    <Input
+                      id="unit_of_numeration"
+                      value={formData.unit_of_numeration}
+                      onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
+                      placeholder="Price Period (e.g. Month, Week, Day)"
+                      onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false })}
+                    />
+                  </div>
+                )}
+              </>
             )}
             {/* Description */}
             <div className="space-y-2">
@@ -517,26 +527,20 @@ const ListingManager = observer(() => {
                 value={formData.description}
                 onChange={(e) => {
                   const value = e.target.value;
-                  // Если введено не более 200 символов, обновляем состояние
                   if (value.length <= 1000) {
                     setFormData({ ...formData, description: value });
                   }
                 }}
                 placeholder="Description"
-                onFocus={(e) =>
-                  e.target.addEventListener("wheel", function (e) {
-                    e.preventDefault();
-                  }, { passive: false })
-                }
+                onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false })}
               />
-              {/* Счётчик оставшихся символов */}
               <div className="text-right text-xs">
                 <span className={formData.description.length >= 1000 ? "text-red-500" : "text-gray-500"}>
                   {1000 - formData.description.length}
                 </span>
               </div>
             </div>
-            {/* Селекты для Primary Category, Category */}
+            {/* Primary Category */}
             <div className="space-y-2">
               <Label htmlFor="status">Primary Category</Label>
               <select
@@ -551,6 +555,7 @@ const ListingManager = observer(() => {
                 <option value="rentals">Rentals</option>
               </select>
             </div>
+            {/* Category */}
             <div className="space-y-2">
               <Label htmlFor="categoryId">Category</Label>
               <select
@@ -567,7 +572,7 @@ const ListingManager = observer(() => {
                 ))}
               </select>
             </div>
-            {/* Селект Rent Time отображается только если выбрана категория, для которой он нужен */}
+            {/* Rent Time */}
             {(formData.status.toLowerCase() !== "our portfolio" &&
               formData.status.toLowerCase() !== "leisure") && (
                 <div className="space-y-2">
@@ -587,9 +592,9 @@ const ListingManager = observer(() => {
                   </select>
                 </div>
               )}
-            {/* Кастомные поля */}
+            {/* Custom fields */}
             {renderCustomFields()}
-            {/* Загрузка изображений / миниатюр */}
+            {/* Image uploads */}
             <div className="space-y-2">
               <Label htmlFor="images">Images</Label>
               {editingListing && renderExistingImages()}
@@ -599,7 +604,7 @@ const ListingManager = observer(() => {
                     type="file"
                     multiple
                     onChange={(e) => handleFileFieldChange(e, index)}
-                    onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault() }, { passive: false })}
+                    onFocus={(e) => e.target.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false })}
                   />
                   {file && (
                     <img

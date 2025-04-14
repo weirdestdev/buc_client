@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, ArrowRight, Lock, Settings  } from 'lucide-react';
+import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, ArrowRight, Lock, Settings } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,12 +30,12 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
       // Загружаем данные с сервера через store
       await rentTimeStore.loadRentalsByStatus('leisure');
       properties = rentTimeStore.rentals;
-      
+
       // Если не находимся в /member-panel, фильтруем по featured = true
       if (!location.pathname.includes('/member-panel')) {
         properties = properties.filter(property => property.featured === true);
       }
-      
+
       // Формируем массив уникальных категорий
       const uniqueCategoriesMap = {};
       properties.forEach(property => {
@@ -44,28 +44,28 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
         }
       });
       setCategories(Object.values(uniqueCategoriesMap));
-      
+
       // Фильтрация по выбранной категории (если не выбрано "all")
       let result = [...properties];
       if (selectedCategory !== "all") {
         result = result.filter(property => property.category?.id === selectedCategory);
       }
-      
+
       // Сортировка по цене
       result.sort((a, b) =>
         sortDirection === 'asc' ? a.price - b.price : b.price - a.price
       );
-      
+
       setFilteredProperties(result);
     }
     loadProperties();
-  }, [selectedCategory, sortDirection, rentTimeStore, location.pathname]);  
+  }, [selectedCategory, sortDirection, rentTimeStore, location.pathname]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));
   };
 
- const handlePropertyClick = (property: any) => {
+  const handlePropertyClick = (property: any) => {
     // Если пользователь не аутентифицирован – открываем окно регистрации
     if (!userStore.isAuth) {
       if (openAuthDialog) openAuthDialog("register");
@@ -116,13 +116,14 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
             <span>{property.description}</span>
           </div>
           <div className="flex justify-between items-center mt-4">
-            <div className="font-display text-lg font-medium flex items-center">
-              {formatPrice(property.price)}
-              <EuroIcon className="w-5 h-5 ml-1 mr-1" />
-              <span className="text-sm text-muted-foreground ml-1">
-                /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
-              </span>
-            </div>
+            {property.price !== 0 ?
+              <div className="font-display text-lg font-medium flex items-center">
+                {formatPrice(property.price)}
+                <EuroIcon className="w-5 h-5 ml-1 mr-1" />
+                <span className="text-sm text-muted-foreground ml-1">
+                  /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
+                </span>
+              </div> : <span>Price on request</span>}
           </div>
         </CardContent>
       </Card>

@@ -148,10 +148,11 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
             <span>{property.address}</span>
           </div>
           <div className="flex justify-between items-center mt-4">
+            {property.price !== 0 ?
             <div className="font-display text-lg font-medium flex items-center">
               {formatPrice(property.price)}
               <EuroIcon className="w-5 h-5 ml-1 flex-shrink-0" />
-            </div>
+            </div> : <span>Price on request</span>}
             {(bedroomsField || bathroomsField) && (
               <div className="text-sm text-muted-foreground flex items-center space-x-2">
                 {bedroomsField && (

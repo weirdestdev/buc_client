@@ -32,7 +32,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
       await rentTimeStore.loadRentTimes();
       await rentTimeStore.loadRentalsByStatus('rentals');
       setRentTimes(rentTimeStore.rentTimes);
-  
+
       let rentals = [...rentTimeStore.rentals];
       // Если выбрано конкретное время аренды, фильтруем по rentTimeId
       if (selectedRentTime !== "all") {
@@ -44,23 +44,23 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
           ? a.price - b.price
           : b.price - a.price
       );
-  
+
       // Если не находимся в /member-panel, фильтруем: оставляем только featured объявления
       if (!location.pathname.includes('/member-panel')) {
         rentals = rentals.filter(rental => rental.featured);
       }
-  
+
       setFilteredProperties(rentals);
     }
     loadData();
   }, [selectedRentTime, sortDirection, rentTimeStore, location.pathname]);
-  
+
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));
   };
 
-const handlePropertyClick = (property: any) => {
+  const handlePropertyClick = (property: any) => {
     // Если пользователь не аутентифицирован – открываем окно регистрации
     if (!userStore.isAuth) {
       if (openAuthDialog) openAuthDialog("register");
@@ -83,17 +83,17 @@ const handlePropertyClick = (property: any) => {
   const renderPropertyCard = (property: any) => {
     // Находим время аренды по rentTimeId
     const rentTime = rentTimes.find(rt => rt.id === property.rentTimeId);
-  
+
     const bedroomsField = property.rental_custom_data?.find((item: any) => {
       const name = item.categories_datum.name.toLowerCase();
       return name.includes("bed") && !name.includes("bath");
     });
-  
+
     const bathroomsField = property.rental_custom_data?.find((item: any) => {
       const name = item.categories_datum.name.toLowerCase();
       return name.includes("bath");
     });
-  
+
     return (
       <Card
         key={property.id}
@@ -101,7 +101,7 @@ const handlePropertyClick = (property: any) => {
         onClick={() => handlePropertyClick(property)}
       >
         <div className="image-loading h-60 relative">
-          <div style={{zIndex: "1"}} className="absolute top-3 right-3 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5">
+          <div style={{ zIndex: "1" }} className="absolute top-3 right-3 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-calendar-days w-5 h-5" data-lov-id="src/components/Portfolio.tsx:52:15" data-lov-name="CalendarDays" data-component-path="src/components/Portfolio.tsx" data-component-line="52" data-component-file="Portfolio.tsx" data-component-name="CalendarDays" data-component-content="%7B%22className%22%3A%22w-5%20h-5%22%7D"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
             <span>{rentTime ? rentTime.name : 'N/A'}</span>
           </div>
@@ -129,11 +129,12 @@ const handlePropertyClick = (property: any) => {
             <span>{property.address}</span>
           </div>
           <div className="flex justify-between items-center mt-4">
-            <div className="font-display text-lg font-medium flex items-center">
-              {formatPrice(property.price)}
-              <EuroIcon className="w-5 h-5 ml-1 mr-1" />
-              <span className="text-sm text-muted-foreground ml-1">/{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}</span>
-            </div>
+            {property.price !== 0 ?
+              <div className="font-display text-lg font-medium flex items-center">
+                {formatPrice(property.price)}
+                <EuroIcon className="w-5 h-5 ml-1 mr-1" />
+                <span className="text-sm text-muted-foreground ml-1">/{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}</span>
+              </div> : <span>Price on request</span>}
             {(bedroomsField || bathroomsField) && (
               <div className="text-sm text-muted-foreground flex items-center space-x-2">
                 {bedroomsField && (
@@ -156,7 +157,7 @@ const handlePropertyClick = (property: any) => {
       </Card>
     );
   };
-  
+
 
   return (
     <section id="portfolio" className="section-padding bg-white w-full overflow-hidden">

@@ -518,7 +518,7 @@ const ListingManager = observer(() => {
                 onChange={(e) => {
                   const value = e.target.value;
                   // Если введено не более 200 символов, обновляем состояние
-                  if (value.length <= 200) {
+                  if (value.length <= 1000) {
                     setFormData({ ...formData, description: value });
                   }
                 }}
@@ -531,8 +531,8 @@ const ListingManager = observer(() => {
               />
               {/* Счётчик оставшихся символов */}
               <div className="text-right text-xs">
-                <span className={formData.description.length >= 200 ? "text-red-500" : "text-gray-500"}>
-                  {200 - formData.description.length}
+                <span className={formData.description.length >= 1000 ? "text-red-500" : "text-gray-500"}>
+                  {1000 - formData.description.length}
                 </span>
               </div>
             </div>

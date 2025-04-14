@@ -139,7 +139,9 @@ function PropertyDetailsDialog({
                 .filter(item => item.value && item.value !== "0")
                 .map((item) => (
                   <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
-                    <div className="text-sm text-muted-foreground">{item.categories_datum.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {item.categories_datum.name}
+                    </div>
                     <div className="font-display font-medium flex items-center justify-center mt-1">
                       {item.categories_datum.name === "Peoples" ? (
                         <Users className="w-4 h-4 mr-1" />
@@ -147,6 +149,7 @@ function PropertyDetailsDialog({
                         <Bed className="w-4 h-4 mr-1" />
                       ) : null}
                       {item.value}
+                      {item.categories_datum.name === "Deposit" && " €"}
                       {(item.categories_datum.name.includes("Plot Area") ||
                         item.categories_datum.name.includes("Living Area")) && " m²"}
                     </div>

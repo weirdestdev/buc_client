@@ -347,14 +347,14 @@ const Admin = observer(() => {
             </div>
             {/* Фильтрация по категориям */}
             <Tabs
-              defaultValue={categoryFilter || 'all'}
-              onValueChange={(value) => setCategoryFilter(value === 'all' ? '' : value)}
+              defaultValue={categoryFilter || ''}
+              onValueChange={(value) => setCategoryFilter(value === '' ? '' : value)}
             >
               <TabsList className="mb-4">
                 <TabsTrigger value="pending">Pending Requests</TabsTrigger>
                 <TabsTrigger value="approved">Approved Users</TabsTrigger>
                 <TabsTrigger value="blocked">Blocked Users</TabsTrigger>
-                <TabsTrigger value="all">All Users</TabsTrigger>
+                <TabsTrigger value="">All Users</TabsTrigger>
               </TabsList>
             </Tabs>
             {/* Таблица пользователей */}

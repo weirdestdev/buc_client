@@ -86,7 +86,7 @@ function PropertyDetailsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[700px] max-h-screen overflow-y-auto pb-2 sm:pb-0">
+        <DialogContent className="sm:max-w-[700px] max-h-screen overflow-y-auto pb-4 sm:pb-2">
           <DialogHeader>
             <DialogTitle className="text-xl font-display">{property.name}</DialogTitle>
             <DialogDescription className="flex items-center text-muted-foreground">

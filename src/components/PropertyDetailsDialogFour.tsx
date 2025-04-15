@@ -174,7 +174,7 @@ function PropertyDetailsDialog({
             </div>
 
             {/* Кнопки действий */}
-            <div className="flex flex-col sm:flex-row gap-2 justify-end">
+            <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
               {property.pdfLink && (
                 <Button 
                   variant="outline" 

@@ -15,7 +15,8 @@ import {
   Bed,
   Users,
   ArrowRight,
-  FileText
+  Lock,
+  FileText // Импортируем иконку для PDF файла
 } from 'lucide-react';
 import {
   Carousel,
@@ -27,6 +28,7 @@ import {
 import { Context } from '@/main';
 import CreateMemberRequestModal from './CreateMemberRequestModal';
 
+// Обновлённый интерфейс, чтобы соответствовать JSON-данным
 interface RentalCustomData {
   id: number;
   value: string;
@@ -48,7 +50,7 @@ interface BaseItemProps {
   rent_time: { id: number; name: string };
   rentals_images: { id: number; image: string }[];
   rental_custom_data: RentalCustomData[];
-  pdfLink?: string;
+  pdfLink?: string;  // Добавляем поле pdfLink
 }
 
 interface PropertyDetailsDialogProps {
@@ -64,12 +66,17 @@ function PropertyDetailsDialog({
 }: PropertyDetailsDialogProps) {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { userStore } = useContext(Context);
+  const isAuthenticated = userStore.isAuth;
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   if (!property) return null;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
+  };
+
+  const handleSignIn = () => {
+    onOpenChange(false);
+    setAuthDialogOpen(true);
   };
 
   const allImages = property.rentals_images.length
@@ -79,8 +86,7 @@ function PropertyDetailsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[700px] max-h-screen mt-10 flex flex-col">
-          {/* Header остается без изменений (заголовок и крестик, как в вашем текущем дизайне) */}
+        <DialogContent className="sm:max-w-[700px] max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-display">{property.name}</DialogTitle>
             <DialogDescription className="flex items-center text-muted-foreground">
@@ -88,11 +94,9 @@ function PropertyDetailsDialog({
               {property.address}
             </DialogDescription>
           </DialogHeader>
-
-          {/* Внутренний контент в области прокрутки */}
-          <div className="flex-grow overflow-y-auto p-4">
+          <div className="space-y-4 overflow-y-auto max-h-screen">
             {/* Карусель изображений */}
-            <Carousel className="w-full mb-4">
+            <Carousel className="w-full">
               <CarouselContent>
                 {allImages.map((image, index) => (
                   <CarouselItem key={index}>
@@ -107,65 +111,70 @@ function PropertyDetailsDialog({
                 ))}
               </CarouselContent>
               <div className="flex items-center w-full mt-2 justify-end relative">
-                <CarouselPrevious className="mr-1" style={{ transform: 'translate(0, 0)' }} />
-                <CarouselNext style={{ transform: 'translate(0, 0)' }} />
-              </div>
-
-              {/* Блок информации */}
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {property.price !== 0 && (
-                  <div className="bg-secondary rounded-md p-3 text-center">
-                    <div className="text-sm text-muted-foreground">Price</div>
-                    <div className="font-display font-medium flex items-center justify-center mt-1">
-                      {formatPrice(property.price)}
-                      <Euro className="w-4 h-4 ml-1 mr-1" />
-                      <span className="text-sm text-muted-foreground ml-1">
-                        /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {property.rental_custom_data
-                  .filter(item => item.value && item.value !== "0")
-                  .map((item) => (
-                    <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
-                      <div className="text-sm text-muted-foreground">
-                        {item.categories_datum.name}
-                      </div>
-                      <div className="font-display font-medium flex items-center justify-center mt-1">
-                        {item.categories_datum.name === "Peoples" ? (
-                          <Users className="w-4 h-4 mr-1" />
-                        ) : item.categories_datum.name === "Beds" ? (
-                          <Bed className="w-4 h-4 mr-1" />
-                        ) : null}
-                        {item.value}
-                        {item.categories_datum.name === "Deposit" && " €"}
-                        {(item.categories_datum.name.includes("Plot Area") ||
-                          item.categories_datum.name.includes("Living Area")) && " m²"}
-                      </div>
-                    </div>
-                  ))}
-
-                <div className="bg-secondary rounded-md p-3 text-center">
-                  <div className="text-sm text-muted-foreground">Type</div>
-                  <div className="font-display font-medium flex items-center justify-center mt-1">
-                    {property.rent_time ? property.rent_time.name : 'N/A'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Описание */}
-              <div className="mt-4">
-                <h4 className="font-medium mb-2">Description</h4>
-                <p className="text-muted-foreground text-sm">{property.description}</p>
+                <CarouselPrevious
+                  className="mr-1 relative"
+                  style={{ transform: 'translate(0, 0)', left: '0px', top: '0px' }}
+                />
+                <CarouselNext
+                  className="relative"
+                  style={{ transform: 'translate(0, 0)', right: '0px', top: '0px' }}
+                />
               </div>
             </Carousel>
-          </div>
 
-          {/* Footer с кнопками — остаются статичными */}
-          <div className="p-4 border-t">
-            <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0">
+            {/* Блок информации */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Цена */}
+              {property.price !== 0 && (
+                <div className="bg-secondary rounded-md p-3 text-center">
+                  <div className="text-sm text-muted-foreground">Price</div>
+                  <div className="font-display font-medium flex items-center justify-center mt-1">
+                    {formatPrice(property.price)}
+                    <Euro className="w-4 h-4 ml-1 mr-1" />
+                    <span className="text-sm text-muted-foreground ml-1">
+                      /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Доступность и другие параметры */}
+              {property.rental_custom_data
+                .filter(item => item.value && item.value !== "0")
+                .map((item) => (
+                  <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
+                    <div className="text-sm text-muted-foreground">
+                      {item.categories_datum.name}
+                    </div>
+                    <div className="font-display font-medium flex items-center justify-center mt-1">
+                      {item.categories_datum.name === "Peoples" ? (
+                        <Users className="w-4 h-4 mr-1" />
+                      ) : item.categories_datum.name === "Beds" ? (
+                        <Bed className="w-4 h-4 mr-1" />
+                      ) : null}
+                      {item.value}
+                      {item.categories_datum.name === "Deposit" && " €"}
+                      {(item.categories_datum.name.includes("Plot Area") ||
+                        item.categories_datum.name.includes("Living Area")) && " m²"}
+                    </div>
+                  </div>
+                ))}
+
+              <div className="bg-secondary rounded-md p-3 text-center">
+                <div className="text-sm text-muted-foreground">Type</div>
+                <div className="font-display font-medium flex items-center justify-center mt-1">
+                  {property.rent_time ? property.rent_time.name : 'N/A'}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-2">Description</h4>
+              <p className="text-muted-foreground text-sm">{property.description}</p>
+            </div>
+
+            {/* Кнопки действий */}
+            <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
               {property.pdfLink && (
                 <Button 
                   variant="outline" 
@@ -184,6 +193,7 @@ function PropertyDetailsDialog({
           </div>
         </DialogContent>
       </Dialog>
+      {/* Передаём rentalName из имени объекта недвижимости */}
       <CreateMemberRequestModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}

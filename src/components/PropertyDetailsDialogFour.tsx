@@ -15,7 +15,6 @@ import {
   Bed,
   Users,
   ArrowRight,
-  Lock,
   FileText
 } from 'lucide-react';
 import {
@@ -65,18 +64,12 @@ function PropertyDetailsDialog({
 }: PropertyDetailsDialogProps) {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { userStore } = useContext(Context);
-  const isAuthenticated = userStore.isAuth;
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   if (!property) return null;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
-  };
-
-  const handleSignIn = () => {
-    onOpenChange(false);
-    setAuthDialogOpen(true);
   };
 
   const allImages = property.rentals_images.length
@@ -86,25 +79,17 @@ function PropertyDetailsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        {/* Корневой контейнер с flex-версткой и ограниченной высотой */}
-        <DialogContent className="sm:max-w-[700px] max-h-screen flex flex-col">
-          
-          {/* Header: всегда видимый (sticky) */}
-          <div className="sticky top-0 bg-white z-10 border-b">
-            <div className="flex justify-between items-center p-4">
-              <DialogTitle className="text-xl font-display">{property.name}</DialogTitle>
-              <button onClick={() => onOpenChange(false)} className="text-gray-500 hover:text-gray-700">
-                {/* Можно использовать иконку крестика, если такая имеется */}
-                X
-              </button>
-            </div>
-            <DialogDescription className="flex items-center text-muted-foreground px-4 pb-2">
+        <DialogContent className="sm:max-w-[700px] max-h-screen mt-10 flex flex-col">
+          {/* Header остается без изменений (заголовок и крестик, как в вашем текущем дизайне) */}
+          <DialogHeader>
+            <DialogTitle className="text-xl font-display">{property.name}</DialogTitle>
+            <DialogDescription className="flex items-center text-muted-foreground">
               <MapPin className="w-4 h-4 mr-1" />
               {property.address}
             </DialogDescription>
-          </div>
+          </DialogHeader>
 
-          {/* Скроллимый контент */}
+          {/* Внутренний контент в области прокрутки */}
           <div className="flex-grow overflow-y-auto p-4">
             {/* Карусель изображений */}
             <Carousel className="w-full mb-4">
@@ -122,69 +107,64 @@ function PropertyDetailsDialog({
                 ))}
               </CarouselContent>
               <div className="flex items-center w-full mt-2 justify-end relative">
-                <CarouselPrevious
-                  className="mr-1"
-                  style={{ transform: 'translate(0, 0)' }}
-                />
-                <CarouselNext
-                  style={{ transform: 'translate(0, 0)' }}
-                />
+                <CarouselPrevious className="mr-1" style={{ transform: 'translate(0, 0)' }} />
+                <CarouselNext style={{ transform: 'translate(0, 0)' }} />
+              </div>
+
+              {/* Блок информации */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                {property.price !== 0 && (
+                  <div className="bg-secondary rounded-md p-3 text-center">
+                    <div className="text-sm text-muted-foreground">Price</div>
+                    <div className="font-display font-medium flex items-center justify-center mt-1">
+                      {formatPrice(property.price)}
+                      <Euro className="w-4 h-4 ml-1 mr-1" />
+                      <span className="text-sm text-muted-foreground ml-1">
+                        /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {property.rental_custom_data
+                  .filter(item => item.value && item.value !== "0")
+                  .map((item) => (
+                    <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
+                      <div className="text-sm text-muted-foreground">
+                        {item.categories_datum.name}
+                      </div>
+                      <div className="font-display font-medium flex items-center justify-center mt-1">
+                        {item.categories_datum.name === "Peoples" ? (
+                          <Users className="w-4 h-4 mr-1" />
+                        ) : item.categories_datum.name === "Beds" ? (
+                          <Bed className="w-4 h-4 mr-1" />
+                        ) : null}
+                        {item.value}
+                        {item.categories_datum.name === "Deposit" && " €"}
+                        {(item.categories_datum.name.includes("Plot Area") ||
+                          item.categories_datum.name.includes("Living Area")) && " m²"}
+                      </div>
+                    </div>
+                  ))}
+
+                <div className="bg-secondary rounded-md p-3 text-center">
+                  <div className="text-sm text-muted-foreground">Type</div>
+                  <div className="font-display font-medium flex items-center justify-center mt-1">
+                    {property.rent_time ? property.rent_time.name : 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Описание */}
+              <div className="mt-4">
+                <h4 className="font-medium mb-2">Description</h4>
+                <p className="text-muted-foreground text-sm">{property.description}</p>
               </div>
             </Carousel>
-
-            {/* Информационные блоки */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {property.price !== 0 && (
-                <div className="bg-secondary rounded-md p-3 text-center">
-                  <div className="text-sm text-muted-foreground">Price</div>
-                  <div className="font-display font-medium flex items-center justify-center mt-1">
-                    {formatPrice(property.price)}
-                    <Euro className="w-4 h-4 ml-1 mr-1" />
-                    <span className="text-sm text-muted-foreground ml-1">
-                      /{property.unit_of_numeration.replace(/[^A-Za-zА-Яа-яЁё0-9\s]/g, '')}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {property.rental_custom_data
-                .filter(item => item.value && item.value !== "0")
-                .map((item) => (
-                  <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
-                    <div className="text-sm text-muted-foreground">
-                      {item.categories_datum.name}
-                    </div>
-                    <div className="font-display font-medium flex items-center justify-center mt-1">
-                      {item.categories_datum.name === "Peoples" ? (
-                        <Users className="w-4 h-4 mr-1" />
-                      ) : item.categories_datum.name === "Beds" ? (
-                        <Bed className="w-4 h-4 mr-1" />
-                      ) : null}
-                      {item.value}
-                      {item.categories_datum.name === "Deposit" && " €"}
-                      {(item.categories_datum.name.includes("Plot Area") ||
-                        item.categories_datum.name.includes("Living Area")) && " m²"}
-                    </div>
-                  </div>
-                ))}
-
-              <div className="bg-secondary rounded-md p-3 text-center">
-                <div className="text-sm text-muted-foreground">Type</div>
-                <div className="font-display font-medium flex items-center justify-center mt-1">
-                  {property.rent_time ? property.rent_time.name : 'N/A'}
-                </div>
-              </div>
-            </div>
-
-            {/* Описание */}
-            <div className="mb-4">
-              <h4 className="font-medium mb-2">Description</h4>
-              <p className="text-muted-foreground text-sm">{property.description}</p>
-            </div>
           </div>
 
-          {/* Футер: всегда видимые кнопки, закрепленные снизу */}
-          <div className="sticky bottom-0 bg-white z-10 border-t p-4">
+          {/* Footer с кнопками — остаются статичными */}
+          <div className="p-4 border-t">
             <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0">
               {property.pdfLink && (
                 <Button 

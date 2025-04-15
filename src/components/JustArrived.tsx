@@ -122,12 +122,9 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
                 onLoad={() => handleImageLoad(property.id)}
               />
             ) : (
-              <img
-                src={property.image || '/fallback-image.jpg'}
-                alt={property.name}
-                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
-                onLoad={() => handleImageLoad(property.id)}
-              />
+              <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm">
+                No Image
+              </div>
             )}
           </div>
           {userStore.user?.status !== 'approved' && (
@@ -149,10 +146,10 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           </div>
           <div className="flex justify-between items-center mt-4">
             {property.price !== 0 ?
-            <div className="font-display text-lg font-medium flex items-center">
-              {formatPrice(property.price)}
-              <EuroIcon className="w-5 h-5 ml-1 flex-shrink-0" />
-            </div> : <span>Price on request</span>}
+              <div className="font-display text-lg font-medium flex items-center">
+                {formatPrice(property.price)}
+                <EuroIcon className="w-5 h-5 ml-1 flex-shrink-0" />
+              </div> : <span>Price on request</span>}
             {(bedroomsField || bathroomsField) && (
               <div className="text-sm text-muted-foreground flex items-center space-x-2">
                 {bedroomsField && (

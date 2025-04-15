@@ -105,12 +105,18 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-calendar-days w-5 h-5" data-lov-id="src/components/Portfolio.tsx:52:15" data-lov-name="CalendarDays" data-component-path="src/components/Portfolio.tsx" data-component-line="52" data-component-file="Portfolio.tsx" data-component-name="CalendarDays" data-component-content="%7B%22className%22%3A%22w-5%20h-5%22%7D"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
             <span>{rentTime ? rentTime.name : 'N/A'}</span>
           </div>
-          <img
-            src={property.rentals_images[0].image || '/fallback-image.jpg'}
-            alt={property.name}
-            className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
-            onLoad={() => handleImageLoad(property.id)}
-          />
+          {property.rentals_images && property.rentals_images.length > 0 ? (
+            <img
+              src={property.rentals_images[0].image}
+              alt={property.name}
+              className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
+              onLoad={() => handleImageLoad(property.id)}
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm">
+              No Image
+            </div>
+          )}
           {userStore.user?.status !== 'approved' && (
             <div className="absolute inset-0 bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
               <div className="bg-white/90 rounded-full p-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex items-center">

@@ -31,6 +31,7 @@ export interface IRental {
   categoryId: number;
   rentTimeId: number;
   images: string[];
+  pdfLink?: string;
 }
 
 class RentTimeStore {

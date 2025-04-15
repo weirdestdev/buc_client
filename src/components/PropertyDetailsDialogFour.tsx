@@ -159,13 +159,6 @@ function PropertyDetailsDialog({
                     </div>
                   </div>
                 ))}
-
-              <div className="bg-secondary rounded-md p-3 text-center">
-                <div className="text-sm text-muted-foreground">Type</div>
-                <div className="font-display font-medium flex items-center justify-center mt-1">
-                  {property.rent_time ? property.rent_time.name : 'N/A'}
-                </div>
-              </div>
             </div>
 
             <div>

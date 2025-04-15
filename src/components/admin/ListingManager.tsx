@@ -59,9 +59,8 @@ const ListingManager = observer(() => {
     priceOnRequest: false,
   });
 
-  // Состояния для загрузки новых файлов, PDF и кастомных полей
+  // Состояния для загрузки новых файлов и кастомных полей
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
   // Состояние для управления миниатюрами (существующими изображениями)
   const [existingImages, setExistingImages] = useState<any[]>([]);
@@ -103,7 +102,6 @@ const ListingManager = observer(() => {
       priceOnRequest: false,
     });
     setFileFields([]);
-    setPdfFile(null);
     setCustomFieldsValues({});
     setExistingImages([]);
     setIsDialogOpen(true);
@@ -122,6 +120,7 @@ const ListingManager = observer(() => {
       featured: listing.featured || false,
       categoryId: listing.categoryId?.toString() || '',
       rentTimeId: listing.rentTimeId?.toString() || '',
+      // Если цена равна 0, считаем, что включён Price on Request
       priceOnRequest: listing.price === 0,
     });
     setCustomFieldsValues(
@@ -132,17 +131,17 @@ const ListingManager = observer(() => {
           }, {})
         : {}
     );
+    // Если изображения пришли с order = 0, пересчитываем порядок по индексу
     let loadedImages = listing.rentals_images || [];
     if (loadedImages.length > 0 && loadedImages.every((img: any) => img.order === 0)) {
       loadedImages = loadedImages.map((img: any, index: number) => ({ ...img, order: index }));
     }
     setExistingImages(loadedImages);
     setFileFields([]);
-    setPdfFile(null);
     setIsDialogOpen(true);
   };
 
-  // Добавление нового поля для загрузки изображения
+  // Добавление нового поля для загрузки файла
   const addFileField = () => {
     setFileFields([...fileFields, null]);
   };
@@ -153,13 +152,6 @@ const ListingManager = observer(() => {
       const newFileFields = [...fileFields];
       newFileFields.splice(index, 1, ...filesArray);
       setFileFields(newFileFields);
-    }
-  };
-
-  // Обработчик выбора PDF-файла
-  const handlePdfFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setPdfFile(e.target.files[0]);
     }
   };
 
@@ -272,6 +264,7 @@ const ListingManager = observer(() => {
   });
 
   const handleSaveListing = async () => {
+    // Если Price on Request не выбран, проверяем обязательное поле Price
     if (!formData.name || (!formData.priceOnRequest && !formData.price)) {
       alert('Введите обязательные поля: Title и Price');
       return;
@@ -285,12 +278,13 @@ const ListingManager = observer(() => {
       form.append('name', formData.name);
       form.append('description', formData.description);
       form.append('address', formData.address);
+      // Если Price on Request включён, передаём 0, иначе передаём введённое значение
       form.append('price', formData.priceOnRequest ? '0' : formData.price);
 
       if (
         !formData.priceOnRequest &&
         (formData.status.toLowerCase() === 'rentals' ||
-         formData.status.toLowerCase() === 'leisure')
+          formData.status.toLowerCase() === 'leisure')
       ) {
         form.append('unit_of_numeration', formData.unit_of_numeration);
       }
@@ -312,6 +306,7 @@ const ListingManager = observer(() => {
       }));
       form.append('customData', JSON.stringify(customDataArray));
 
+      // Если есть новые файлы для загрузки, используем их
       if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
         fileFields.forEach((file) => {
           if (file) {
@@ -319,16 +314,14 @@ const ListingManager = observer(() => {
           }
         });
       } else {
+        // Если не загружаются новые файлы, то отправляем обновленные изображения.
+        // Важно: перебираем текущий массив existingImages и пересчитываем порядок (order) согласно индексу.
         const updatedImages = existingImages.map((img, index) => ({
           id: img.id,
           image: img.image,
           order: index,
         }));
         form.append('updatedImages', JSON.stringify(updatedImages));
-      }
-
-      if (pdfFile) {
-        form.append('pdf', pdfFile);
       }
 
       if (editingListing) {
@@ -338,7 +331,6 @@ const ListingManager = observer(() => {
       }
       await rentTimeStore.loadRentals();
       setFileFields([]);
-      setPdfFile(null);
     } catch (error) {
       console.error('Ошибка создания объявления:', error);
     } finally {
@@ -390,10 +382,14 @@ const ListingManager = observer(() => {
   return (
     <div className="space-y-6">
       {isLoading && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[10000]">
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[10000]"
+          style={{ pointerEvents: 'all' }}
+        >
           <div className="text-white text-xl">Loading...</div>
         </div>
       )}
+
       <div className="flex space-x-4">
         {(['Our Portfolio', 'Rentals', 'Leisure'] as ActiveTab[]).map((tab) => (
           <Button
@@ -405,12 +401,14 @@ const ListingManager = observer(() => {
           </Button>
         ))}
       </div>
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Listing Management</h2>
         <Button onClick={openAddDialog}>
           <Plus className="mr-2 h-4 w-4" /> Add Listing
         </Button>
       </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -457,6 +455,7 @@ const ListingManager = observer(() => {
           </TableBody>
         </Table>
       </div>
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl max-h-screen overflow-y-auto">
           <DialogHeader>
@@ -465,6 +464,7 @@ const ListingManager = observer(() => {
               {editingListing ? 'Edit the listing details' : 'Fill in the details for the new listing'}
             </DialogDescription>
           </DialogHeader>
+
           <div className="space-y-4 py-4">
             {/* Title */}
             <div className="space-y-2">
@@ -475,6 +475,11 @@ const ListingManager = observer(() => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Listing Title"
                 required
+                onFocus={(e) =>
+                  e.target.addEventListener('wheel', function (e) {
+                    e.preventDefault();
+                  }, { passive: false })
+                }
               />
             </div>
             {/* Location */}
@@ -486,6 +491,11 @@ const ListingManager = observer(() => {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="Location"
                 required
+                onFocus={(e) =>
+                  e.target.addEventListener('wheel', function (e) {
+                    e.preventDefault();
+                  }, { passive: false })
+                }
               />
             </div>
             {/* Price on Request */}
@@ -512,6 +522,11 @@ const ListingManager = observer(() => {
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     placeholder="Price"
                     required
+                    onFocus={(e) =>
+                      e.target.addEventListener('wheel', function (e) {
+                        e.preventDefault();
+                      }, { passive: false })
+                    }
                   />
                 </div>
                 {(formData.status.toLowerCase() === 'rentals' ||
@@ -521,10 +536,13 @@ const ListingManager = observer(() => {
                     <Input
                       id="unit_of_numeration"
                       value={formData.unit_of_numeration}
-                      onChange={(e) =>
-                        setFormData({ ...formData, unit_of_numeration: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
                       placeholder="Price Period (e.g. Month, Week, Day)"
+                      onFocus={(e) =>
+                        e.target.addEventListener('wheel', function (e) {
+                          e.preventDefault();
+                        }, { passive: false })
+                      }
                     />
                   </div>
                 )}
@@ -543,6 +561,11 @@ const ListingManager = observer(() => {
                   }
                 }}
                 placeholder="Description"
+                onFocus={(e) =>
+                  e.target.addEventListener('wheel', function (e) {
+                    e.preventDefault();
+                  }, { passive: false })
+                }
               />
               <div className="text-right text-xs">
                 <span className={formData.description.length >= 1000 ? 'text-red-500' : 'text-gray-500'}>
@@ -614,6 +637,11 @@ const ListingManager = observer(() => {
                     type="file"
                     multiple
                     onChange={(e) => handleFileFieldChange(e, index)}
+                    onFocus={(e) =>
+                      e.target.addEventListener('wheel', function (e) {
+                        e.preventDefault();
+                      }, { passive: false })
+                    }
                   />
                   {file && (
                     <img
@@ -627,27 +655,6 @@ const ListingManager = observer(() => {
               <Button onClick={addFileField} variant="outline">
                 Add Image Field
               </Button>
-            </div>
-            {/* PDF Field */}
-            <div className="space-y-2">
-              <Label>PDF File</Label>
-              {editingListing && editingListing.pdfLink && (
-                <div className="flex items-center justify-between bg-gray-100 p-2 rounded">
-                  <div className="text-sm">
-                    Current PDF:&nbsp;
-                    <a href={editingListing.pdfLink} target="_blank" rel="noreferrer" className="text-blue-600 underline">
-                      Read PDF
-                    </a>
-                  </div>
-                </div>
-              )}
-              <Input type="file" accept="application/pdf" onChange={handlePdfFileChange} />
-              {pdfFile && (
-                <div className="mt-2 text-sm">
-                  Selected PDF:&nbsp;
-                  <span>{pdfFile.name}</span>
-                </div>
-              )}
             </div>
           </div>
 

@@ -16,7 +16,7 @@ import {
   Users,
   ArrowRight,
   Lock,
-  FileText // Импортируем иконку для PDF файла
+  FileText
 } from 'lucide-react';
 import {
   Carousel,
@@ -28,7 +28,6 @@ import {
 import { Context } from '@/main';
 import CreateMemberRequestModal from './CreateMemberRequestModal';
 
-// Обновлённый интерфейс, чтобы соответствовать JSON-данным
 interface RentalCustomData {
   id: number;
   value: string;
@@ -50,7 +49,7 @@ interface BaseItemProps {
   rent_time: { id: number; name: string };
   rentals_images: { id: number; image: string }[];
   rental_custom_data: RentalCustomData[];
-  pdfLink?: string;  // Добавляем поле pdfLink
+  pdfLink?: string;
 }
 
 interface PropertyDetailsDialogProps {
@@ -68,6 +67,7 @@ function PropertyDetailsDialog({
   const { userStore } = useContext(Context);
   const isAuthenticated = userStore.isAuth;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
   if (!property) return null;
 
   const formatPrice = (price: number) => {
@@ -86,17 +86,28 @@ function PropertyDetailsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[700px] max-h-screen mt-10 overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-display">{property.name}</DialogTitle>
-            <DialogDescription className="flex items-center text-muted-foreground">
+        {/* Корневой контейнер с flex-версткой и ограниченной высотой */}
+        <DialogContent className="sm:max-w-[700px] max-h-screen flex flex-col">
+          
+          {/* Header: всегда видимый (sticky) */}
+          <div className="sticky top-0 bg-white z-10 border-b">
+            <div className="flex justify-between items-center p-4">
+              <DialogTitle className="text-xl font-display">{property.name}</DialogTitle>
+              <button onClick={() => onOpenChange(false)} className="text-gray-500 hover:text-gray-700">
+                {/* Можно использовать иконку крестика, если такая имеется */}
+                X
+              </button>
+            </div>
+            <DialogDescription className="flex items-center text-muted-foreground px-4 pb-2">
               <MapPin className="w-4 h-4 mr-1" />
               {property.address}
             </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
+          </div>
+
+          {/* Скроллимый контент */}
+          <div className="flex-grow overflow-y-auto p-4">
             {/* Карусель изображений */}
-            <Carousel className="w-full">
+            <Carousel className="w-full mb-4">
               <CarouselContent>
                 {allImages.map((image, index) => (
                   <CarouselItem key={index}>
@@ -112,19 +123,17 @@ function PropertyDetailsDialog({
               </CarouselContent>
               <div className="flex items-center w-full mt-2 justify-end relative">
                 <CarouselPrevious
-                  className="mr-1 relative"
-                  style={{ transform: 'translate(0, 0)', left: '0px', top: '0px' }}
+                  className="mr-1"
+                  style={{ transform: 'translate(0, 0)' }}
                 />
                 <CarouselNext
-                  className="relative"
-                  style={{ transform: 'translate(0, 0)', right: '0px', top: '0px' }}
+                  style={{ transform: 'translate(0, 0)' }}
                 />
               </div>
             </Carousel>
 
-            {/* Блок информации */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Цена */}
+            {/* Информационные блоки */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
               {property.price !== 0 && (
                 <div className="bg-secondary rounded-md p-3 text-center">
                   <div className="text-sm text-muted-foreground">Price</div>
@@ -138,7 +147,6 @@ function PropertyDetailsDialog({
                 </div>
               )}
 
-              {/* Доступность и другие параметры */}
               {property.rental_custom_data
                 .filter(item => item.value && item.value !== "0")
                 .map((item) => (
@@ -168,13 +176,16 @@ function PropertyDetailsDialog({
               </div>
             </div>
 
-            <div>
+            {/* Описание */}
+            <div className="mb-4">
               <h4 className="font-medium mb-2">Description</h4>
               <p className="text-muted-foreground text-sm">{property.description}</p>
             </div>
+          </div>
 
-            {/* Кнопки действий */}
-            <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
+          {/* Футер: всегда видимые кнопки, закрепленные снизу */}
+          <div className="sticky bottom-0 bg-white z-10 border-t p-4">
+            <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0">
               {property.pdfLink && (
                 <Button 
                   variant="outline" 
@@ -193,7 +204,6 @@ function PropertyDetailsDialog({
           </div>
         </DialogContent>
       </Dialog>
-      {/* Передаём rentalName из имени объекта недвижимости */}
       <CreateMemberRequestModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}

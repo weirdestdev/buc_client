@@ -86,7 +86,7 @@ function PropertyDetailsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[700px] max-h-screen overflow-y-auto pb-[70px] sm:pb-2 pt-[70px] sm:pt-2">
+        <DialogContent className="sm:max-w-[700px] max-h-screen overflow-y-auto pb-[70px] sm:pb-2 pt-[130px] sm:pt-2">
           <DialogHeader>
             <DialogTitle className="text-xl font-display">{property.name}</DialogTitle>
             <DialogDescription className="flex items-center text-muted-foreground">
@@ -94,7 +94,7 @@ function PropertyDetailsDialog({
               {property.address}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Карусель изображений */}
             <Carousel className="w-full">
               <CarouselContent>

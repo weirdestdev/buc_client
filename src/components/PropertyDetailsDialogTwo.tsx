@@ -160,7 +160,7 @@ function PropertyDetailsDialog({
               <p className="text-muted-foreground text-sm">{property.description}</p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
+          <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-2">
               {property.pdfLink && (
                 <Button
                   variant="outline"

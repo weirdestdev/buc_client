@@ -165,24 +165,23 @@ function PropertyDetailsDialog({
               <h4 className="font-medium mb-2">Description</h4>
               <p className="text-muted-foreground text-sm">{property.description}</p>
             </div>
-
-            {/* Кнопки действий */}
-            <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
-              {property.pdfLink && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.open(property.pdfLink, '_blank')}
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>View PDF</span>
-                </Button>
-              )}
-              <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
-                Make a Booking Request
-                <ArrowRight className="w-4 h-4" />
+          </div>
+          {/* Кнопки действий */}
+          <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
+            {property.pdfLink && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(property.pdfLink, '_blank')}
+                className="flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                <span>View PDF</span>
               </Button>
-            </div>
+            )}
+            <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
+              Make a Booking Request
+              <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

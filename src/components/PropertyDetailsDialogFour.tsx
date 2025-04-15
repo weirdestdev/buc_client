@@ -94,7 +94,7 @@ function PropertyDetailsDialog({
               {property.address}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 overflow-y-auto max-h-screen">
+          <div className="space-y-4">
             {/* Карусель изображений */}
             <Carousel className="w-full">
               <CarouselContent>

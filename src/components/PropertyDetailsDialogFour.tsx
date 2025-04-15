@@ -15,7 +15,8 @@ import {
   Bed,
   Users,
   ArrowRight,
-  Lock
+  Lock,
+  FileText // Импортируем иконку для PDF файла
 } from 'lucide-react';
 import {
   Carousel,
@@ -27,7 +28,7 @@ import {
 import { Context } from '@/main';
 import CreateMemberRequestModal from './CreateMemberRequestModal';
 
-// Обновленный интерфейс, чтобы соответствовать JSON-данным
+// Обновлённый интерфейс, чтобы соответствовать JSON-данным
 interface RentalCustomData {
   id: number;
   value: string;
@@ -49,6 +50,7 @@ interface BaseItemProps {
   rent_time: { id: number; name: string };
   rentals_images: { id: number; image: string }[];
   rental_custom_data: RentalCustomData[];
+  pdfLink?: string;  // Добавляем поле pdfLink
 }
 
 interface PropertyDetailsDialogProps {
@@ -170,10 +172,22 @@ function PropertyDetailsDialog({
               <h4 className="font-medium mb-2">Description</h4>
               <p className="text-muted-foreground text-sm">{property.description}</p>
             </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsModalOpen(true)}>
+
+            {/* Кнопки действий */}
+            <div className="flex flex-col sm:flex-row gap-2 justify-end">
+              {property.pdfLink && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open(property.pdfLink, '_blank')}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>View PDF</span>
+                </Button>
+              )}
+              <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
                 Make a Booking Request
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -185,6 +199,7 @@ function PropertyDetailsDialog({
         onClose={() => setIsModalOpen(false)}
         rentalName={property.name}
       />
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </>
   );
 }

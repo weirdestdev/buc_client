@@ -59,8 +59,9 @@ const ListingManager = observer(() => {
     priceOnRequest: false,
   });
 
-  // Состояния для загрузки новых файлов и кастомных полей
+  // Состояния для загрузки новых файлов, PDF и кастомных полей
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
   // Состояние для управления миниатюрами (существующими изображениями)
   const [existingImages, setExistingImages] = useState<any[]>([]);
@@ -102,6 +103,7 @@ const ListingManager = observer(() => {
       priceOnRequest: false,
     });
     setFileFields([]);
+    setPdfFile(null);
     setCustomFieldsValues({});
     setExistingImages([]);
     setIsDialogOpen(true);
@@ -120,7 +122,6 @@ const ListingManager = observer(() => {
       featured: listing.featured || false,
       categoryId: listing.categoryId?.toString() || '',
       rentTimeId: listing.rentTimeId?.toString() || '',
-      // Если цена равна 0, считаем, что включён Price on Request
       priceOnRequest: listing.price === 0,
     });
     setCustomFieldsValues(
@@ -138,6 +139,7 @@ const ListingManager = observer(() => {
     }
     setExistingImages(loadedImages);
     setFileFields([]);
+    setPdfFile(null);
     setIsDialogOpen(true);
   };
 
@@ -152,6 +154,13 @@ const ListingManager = observer(() => {
       const newFileFields = [...fileFields];
       newFileFields.splice(index, 1, ...filesArray);
       setFileFields(newFileFields);
+    }
+  };
+
+  // Обработчик выбора PDF-файла
+  const handlePdfFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setPdfFile(e.target.files[0]);
     }
   };
 
@@ -264,7 +273,6 @@ const ListingManager = observer(() => {
   });
 
   const handleSaveListing = async () => {
-    // Если Price on Request не выбран, проверяем обязательное поле Price
     if (!formData.name || (!formData.priceOnRequest && !formData.price)) {
       alert('Введите обязательные поля: Title и Price');
       return;
@@ -278,13 +286,12 @@ const ListingManager = observer(() => {
       form.append('name', formData.name);
       form.append('description', formData.description);
       form.append('address', formData.address);
-      // Если Price on Request включён, передаём 0, иначе передаём введённое значение
       form.append('price', formData.priceOnRequest ? '0' : formData.price);
 
       if (
         !formData.priceOnRequest &&
         (formData.status.toLowerCase() === 'rentals' ||
-          formData.status.toLowerCase() === 'leisure')
+         formData.status.toLowerCase() === 'leisure')
       ) {
         form.append('unit_of_numeration', formData.unit_of_numeration);
       }
@@ -306,7 +313,6 @@ const ListingManager = observer(() => {
       }));
       form.append('customData', JSON.stringify(customDataArray));
 
-      // Если есть новые файлы для загрузки, используем их
       if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
         fileFields.forEach((file) => {
           if (file) {
@@ -314,14 +320,16 @@ const ListingManager = observer(() => {
           }
         });
       } else {
-        // Если не загружаются новые файлы, то отправляем обновленные изображения.
-        // Важно: перебираем текущий массив existingImages и пересчитываем порядок (order) согласно индексу.
         const updatedImages = existingImages.map((img, index) => ({
           id: img.id,
           image: img.image,
           order: index,
         }));
         form.append('updatedImages', JSON.stringify(updatedImages));
+      }
+
+      if (pdfFile) {
+        form.append('pdf', pdfFile);
       }
 
       if (editingListing) {
@@ -331,6 +339,7 @@ const ListingManager = observer(() => {
       }
       await rentTimeStore.loadRentals();
       setFileFields([]);
+      setPdfFile(null);
     } catch (error) {
       console.error('Ошибка создания объявления:', error);
     } finally {
@@ -476,9 +485,7 @@ const ListingManager = observer(() => {
                 placeholder="Listing Title"
                 required
                 onFocus={(e) =>
-                  e.target.addEventListener('wheel', function (e) {
-                    e.preventDefault();
-                  }, { passive: false })
+                  e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
                 }
               />
             </div>
@@ -492,9 +499,7 @@ const ListingManager = observer(() => {
                 placeholder="Location"
                 required
                 onFocus={(e) =>
-                  e.target.addEventListener('wheel', function (e) {
-                    e.preventDefault();
-                  }, { passive: false })
+                  e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
                 }
               />
             </div>
@@ -510,7 +515,7 @@ const ListingManager = observer(() => {
                 Price on Request
               </Label>
             </div>
-            {/* Price и Price Period, если Price on Request не выбран */}
+            {/* Price и Price Period */}
             {!formData.priceOnRequest && (
               <>
                 <div className="space-y-2">
@@ -523,9 +528,7 @@ const ListingManager = observer(() => {
                     placeholder="Price"
                     required
                     onFocus={(e) =>
-                      e.target.addEventListener('wheel', function (e) {
-                        e.preventDefault();
-                      }, { passive: false })
+                      e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
                     }
                   />
                 </div>
@@ -539,9 +542,7 @@ const ListingManager = observer(() => {
                       onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
                       placeholder="Price Period (e.g. Month, Week, Day)"
                       onFocus={(e) =>
-                        e.target.addEventListener('wheel', function (e) {
-                          e.preventDefault();
-                        }, { passive: false })
+                        e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
                       }
                     />
                   </div>
@@ -562,9 +563,7 @@ const ListingManager = observer(() => {
                 }}
                 placeholder="Description"
                 onFocus={(e) =>
-                  e.target.addEventListener('wheel', function (e) {
-                    e.preventDefault();
-                  }, { passive: false })
+                  e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
                 }
               />
               <div className="text-right text-xs">
@@ -638,9 +637,7 @@ const ListingManager = observer(() => {
                     multiple
                     onChange={(e) => handleFileFieldChange(e, index)}
                     onFocus={(e) =>
-                      e.target.addEventListener('wheel', function (e) {
-                        e.preventDefault();
-                      }, { passive: false })
+                      e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
                     }
                   />
                   {file && (
@@ -655,6 +652,32 @@ const ListingManager = observer(() => {
               <Button onClick={addFileField} variant="outline">
                 Add Image Field
               </Button>
+            </div>
+            {/* PDF Field (оставляем, как было) */}
+            <div className="space-y-2">
+              <Label>PDF File</Label>
+              {editingListing && editingListing.pdfLink && (
+                <div className="flex items-center justify-between bg-gray-100 p-2 rounded">
+                  <div className="text-sm">
+                    Current PDF:&nbsp;
+                    <a
+                      href={editingListing.pdfLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      Read PDF
+                    </a>
+                  </div>
+                </div>
+              )}
+              <Input type="file" accept="application/pdf" onChange={handlePdfFileChange} />
+              {pdfFile && (
+                <div className="mt-2 text-sm">
+                  Selected PDF:&nbsp;
+                  <span>{pdfFile.name}</span>
+                </div>
+              )}
             </div>
           </div>
 

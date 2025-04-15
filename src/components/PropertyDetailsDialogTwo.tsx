@@ -159,7 +159,8 @@ function PropertyDetailsDialog({
               <h4 className="font-medium mb-2">Description</h4>
               <p className="text-muted-foreground text-sm">{property.description}</p>
             </div>
-            <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
+          </div>
+          <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-4">
               {property.pdfLink && (
                 <Button
                   variant="outline"
@@ -175,7 +176,6 @@ function PropertyDetailsDialog({
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
       {/* Передаём rentalName из имени объекта недвижимости */}

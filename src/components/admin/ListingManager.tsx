@@ -42,7 +42,7 @@ type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 const ListingManager = observer(() => {
   const { rentTimeStore, categoriesStore } = useContext(Context)!;
 
-  // Состояния формы и диалога
+  // === state ===
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
@@ -58,28 +58,55 @@ const ListingManager = observer(() => {
     rentTimeId: '',
     priceOnRequest: false,
   });
-
-  // Состояния для загрузки новых файлов, PDF и кастомных полей
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [fileFields, setFileFields] = useState<Array<File | null>>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [customFieldsValues, setCustomFieldsValues] = useState<Record<string, string>>({});
-  // Состояние для управления миниатюрами (существующими изображениями)
   const [existingImages, setExistingImages] = useState<any[]>([]);
-  // Состояние загрузки
   const [isLoading, setIsLoading] = useState(false);
 
+  // === load on mount ===
   useEffect(() => {
     rentTimeStore.loadRentals();
     categoriesStore.loadCategories();
     rentTimeStore.loadRentTimes();
   }, [rentTimeStore, categoriesStore]);
 
-  // Фильтрация объявлений по активной вкладке
+  // === filtering listings by tab ===
   const filteredListings = rentTimeStore.rentals.filter((listing: any) => {
     const status = listing.status?.toLowerCase() || '';
     return status === activeTab.toLowerCase();
   });
 
+  // === validation ===
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = 'Title is required';
+    if (!formData.address.trim()) newErrors.address = 'Location is required';
+    if (!formData.status.trim()) newErrors.status = 'Primary Category is required';
+    if (!formData.categoryId) newErrors.categoryId = 'Category is required';
+    if (!formData.priceOnRequest && !formData.price) newErrors.price = 'Price is required';
+    if (
+      !formData.priceOnRequest &&
+      ['rentals', 'leisure'].includes(formData.status.toLowerCase()) &&
+      !formData.unit_of_numeration.trim()
+    ) {
+      newErrors.unit_of_numeration = 'Price Period is required';
+    }
+    if (
+      !['our portfolio', 'leisure'].includes(formData.status.toLowerCase()) &&
+      !formData.rentTimeId
+    ) {
+      newErrors.rentTimeId = 'Rent Time is required';
+    }
+    const totalImages = fileFields.filter(Boolean).length + existingImages.length;
+    if (totalImages === 0) newErrors.images = 'At least one image is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // === handlers ===
   const toggleFeatured = async (listing: any) => {
     const form = new FormData();
     form.append('featured', JSON.stringify(!listing.featured));
@@ -87,7 +114,6 @@ const ListingManager = observer(() => {
     await rentTimeStore.loadRentals();
   };
 
-  // Открытие диалога для создания нового объявления
   const openAddDialog = () => {
     setEditingListing(null);
     setFormData({
@@ -102,6 +128,7 @@ const ListingManager = observer(() => {
       rentTimeId: '',
       priceOnRequest: false,
     });
+    setErrors({});
     setFileFields([]);
     setPdfFile(null);
     setCustomFieldsValues({});
@@ -109,7 +136,6 @@ const ListingManager = observer(() => {
     setIsDialogOpen(true);
   };
 
-  // Открытие диалога для редактирования объявления
   const openEditDialog = (listing: any) => {
     setEditingListing(listing);
     setFormData({
@@ -124,6 +150,8 @@ const ListingManager = observer(() => {
       rentTimeId: listing.rentTimeId?.toString() || '',
       priceOnRequest: listing.price === 0,
     });
+    setErrors({});
+    // custom fields
     setCustomFieldsValues(
       listing.rental_custom_data
         ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
@@ -132,205 +160,96 @@ const ListingManager = observer(() => {
           }, {})
         : {}
     );
-    // Если изображения пришли с order = 0, пересчитываем порядок по индексу
-    let loadedImages = listing.rentals_images || [];
-    if (loadedImages.length > 0 && loadedImages.every((img: any) => img.order === 0)) {
-      loadedImages = loadedImages.map((img: any, index: number) => ({ ...img, order: index }));
+    // existing images
+    let imgs = listing.rentals_images || [];
+    if (imgs.every((i: any) => i.order === 0)) {
+      imgs = imgs.map((i: any, idx: number) => ({ ...i, order: idx }));
     }
-    setExistingImages(loadedImages);
+    setExistingImages(imgs);
     setFileFields([]);
     setPdfFile(null);
     setIsDialogOpen(true);
   };
 
-  // Добавление нового поля для загрузки файла
   const addFileField = () => {
-    setFileFields([...fileFields, null]);
+    setFileFields((f) => [...f, null]);
   };
 
-  const handleFileFieldChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      const newFileFields = [...fileFields];
-      newFileFields.splice(index, 1, ...filesArray);
-      setFileFields(newFileFields);
-    }
+  const handleFileFieldChange = (e: ChangeEvent<HTMLInputElement>, idx: number) => {
+    if (!e.target.files) return;
+    const filesArray = Array.from(e.target.files);
+    setFileFields((f) => {
+      const copy = [...f];
+      copy.splice(idx, 1, ...filesArray);
+      return copy;
+    });
   };
 
-  // Обработчик выбора PDF-файла
   const handlePdfFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
+    if (e.target.files?.[0]) {
       setPdfFile(e.target.files[0]);
     }
   };
 
-  const renderExistingImages = () => {
-    if (existingImages.length === 0) return null;
-    return (
-      <div className="flex flex-wrap gap-2 mt-2">
-        {existingImages.map((imgObj: any, index: number) => {
-          const img = imgObj.image;
-          return (
-            <div key={imgObj.id} className="relative">
-              <img
-                src={img.startsWith('http') ? img : `${SERVER_URL}${img}`}
-                alt={`listing-${index}`}
-                className="h-24 w-24 object-cover rounded"
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  setExistingImages(existingImages.filter((i) => i.id !== imgObj.id))
-                }
-                className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-sm px-2 py-1"
-              >
-                X
-              </button>
-              <div className="flex flex-col absolute left-0 top-0">
-                {index > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = [...existingImages];
-                      [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
-                      setExistingImages(updated);
-                    }}
-                    className="bg-gray-300 text-sm rounded mb-1 px-2 py-1"
-                  >
-                    ↑
-                  </button>
-                )}
-                {index < existingImages.length - 1 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = [...existingImages];
-                      [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
-                      setExistingImages(updated);
-                    }}
-                    className="bg-gray-300 text-sm rounded px-2 py-1"
-                  >
-                    ↓
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const renderCustomFields = () => {
-    if (!formData.categoryId) return null;
-    const selectedCategory = categoriesStore.categories.find(
-      (cat: any) => cat.id.toString() === formData.categoryId
-    );
-    if (!selectedCategory || !selectedCategory.customFields) return null;
-    return (
-      <div className="space-y-2">
-        <Label>Custom Fields</Label>
-        {selectedCategory.customFields.map((field: any) => {
-          let inputType = 'text';
-          if (field.type === 'int' || field.type === 'double') {
-            inputType = 'number';
-          } else if (field.type === 'date') {
-            inputType = 'date';
-          }
-          return (
-            <div key={field.id} className="space-y-1">
-              <Label htmlFor={`custom-${field.id}`}>{field.name}</Label>
-              <Input
-                id={`custom-${field.id}`}
-                type={inputType}
-                value={customFieldsValues[field.id] || ''}
-                onChange={(e) =>
-                  setCustomFieldsValues({ ...customFieldsValues, [field.id]: e.target.value })
-                }
-                onFocus={(e) =>
-                  e.target.addEventListener('wheel', function (e) {
-                    e.preventDefault();
-                  }, { passive: false })
-                }
-                placeholder={`Enter ${field.name}`}
-              />
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const filteredCategories = categoriesStore.categories.filter((cat: any) => {
-    const status = formData.status.toLowerCase();
-    const catName = cat.name.toLowerCase();
-    if (status === 'leisure') {
-      return catName === 'cars' || catName === 'yachts';
-    } else if (status === 'our portfolio' || status === 'rentals') {
-      return catName !== 'cars' && catName !== 'yachts';
+  const handleDeleteListing = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    setIsLoading(true);
+    try {
+      await rentTimeStore.removeRental(id);
+      await rentTimeStore.loadRentals();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-    return true;
-  });
+  };
 
   const handleSaveListing = async () => {
-    if (!formData.name || (!formData.priceOnRequest && !formData.price)) {
-      alert('Введите обязательные поля: Title и Price');
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsDialogOpen(false);
     setIsLoading(true);
-
     try {
       const form = new FormData();
       form.append('name', formData.name);
       form.append('description', formData.description);
       form.append('address', formData.address);
       form.append('price', formData.priceOnRequest ? '0' : formData.price);
-
       if (
         !formData.priceOnRequest &&
-        (formData.status.toLowerCase() === 'rentals' ||
-         formData.status.toLowerCase() === 'leisure')
+        ['rentals', 'leisure'].includes(formData.status.toLowerCase())
       ) {
         form.append('unit_of_numeration', formData.unit_of_numeration);
       }
-
       form.append('status', formData.status);
       form.append('featured', JSON.stringify(formData.featured));
       form.append('categoryId', formData.categoryId);
-
-      if (
-        formData.status.toLowerCase() !== 'our portfolio' &&
-        formData.status.toLowerCase() !== 'leisure'
-      ) {
+      if (!['our portfolio', 'leisure'].includes(formData.status.toLowerCase())) {
         form.append('rentTimeId', formData.rentTimeId);
       }
-
-      const customDataArray = Object.entries(customFieldsValues).map(([fieldId, value]) => ({
-        categoriesDataId: fieldId,
-        value,
-      }));
-      form.append('customData', JSON.stringify(customDataArray));
-
-      if (fileFields.length > 0 && fileFields.some((file) => file !== null)) {
-        fileFields.forEach((file) => {
-          if (file) {
-            form.append('images', file);
-          }
-        });
+      form.append(
+        'customData',
+        JSON.stringify(
+          Object.entries(customFieldsValues).map(([fieldId, value]) => ({
+            categoriesDataId: fieldId,
+            value,
+          }))
+        )
+      );
+      if (fileFields.some((f) => f)) {
+        fileFields.forEach((f) => f && form.append('images', f));
       } else {
-        const updatedImages = existingImages.map((img, index) => ({
-          id: img.id,
-          image: img.image,
-          order: index,
-        }));
-        form.append('updatedImages', JSON.stringify(updatedImages));
+        form.append(
+          'updatedImages',
+          JSON.stringify(
+            existingImages.map((img, idx) => ({
+              id: img.id,
+              image: img.image,
+              order: idx,
+            }))
+          )
+        );
       }
-
-      if (pdfFile) {
-        form.append('pdf', pdfFile);
-      }
+      if (pdfFile) form.append('pdf', pdfFile);
 
       if (editingListing) {
         await rentTimeStore.updateRental(editingListing.id, form);
@@ -340,65 +259,129 @@ const ListingManager = observer(() => {
       await rentTimeStore.loadRentals();
       setFileFields([]);
       setPdfFile(null);
-    } catch (error) {
-      console.error('Ошибка создания объявления:', error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteListing = async (id: number) => {
-    if (window.confirm('Вы действительно хотите удалить это объявление?')) {
-      setIsLoading(true);
-      try {
-        await rentTimeStore.removeRental(id);
-        await rentTimeStore.loadRentals();
-      } catch (error) {
-        console.error('Ошибка при удалении объявления:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  // === rendering helpers ===
+  const renderExistingImages = () => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {existingImages.map((imgObj: any, idx: number) => (
+        <div key={imgObj.id} className="relative">
+          <img
+            src={imgObj.image.startsWith('http') ? imgObj.image : `${SERVER_URL}${imgObj.image}`}
+            alt={`listing-${idx}`}
+            className="h-24 w-24 object-cover rounded"
+          />
+          <button
+            type="button"
+            onClick={() =>
+              setExistingImages((imgs) => imgs.filter((i) => i.id !== imgObj.id))
+            }
+            className="absolute top-0 right-0 bg-red-600 text-white rounded-full px-1"
+          >
+            ×
+          </button>
+          <div className="absolute left-0 top-0 flex flex-col">
+            {idx > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const copy = [...existingImages];
+                  [copy[idx - 1], copy[idx]] = [copy[idx], copy[idx - 1]];
+                  setExistingImages(copy);
+                }}
+                className="bg-gray-300 text-sm rounded mb-1 px-1"
+              >
+                ↑
+              </button>
+            )}
+            {idx < existingImages.length - 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const copy = [...existingImages];
+                  [copy[idx], copy[idx + 1]] = [copy[idx + 1], copy[idx]];
+                  setExistingImages(copy);
+                }}
+                className="bg-gray-300 text-sm rounded px-1"
+              >
+                ↓
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderCustomFields = () => {
+    const cat = categoriesStore.categories.find((c: any) => c.id.toString() === formData.categoryId);
+    if (!cat?.customFields) return null;
+    return (
+      <div className="space-y-2">
+        <Label>Custom Fields</Label>
+        {cat.customFields.map((field: any) => {
+          let type: 'text' | 'number' | 'date' = 'text';
+          if (field.type === 'int' || field.type === 'double') type = 'number';
+          if (field.type === 'date') type = 'date';
+          return (
+            <div key={field.id} className="space-y-1">
+              <Label htmlFor={`custom-${field.id}`}>{field.name}</Label>
+              <Input
+                id={`custom-${field.id}`}
+                type={type}
+                value={customFieldsValues[field.id] || ''}
+                onChange={(e) =>
+                  setCustomFieldsValues((v) => ({ ...v, [field.id]: e.target.value }))
+                }
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const renderCategory = (listing: any) => {
-    const category = listing.category;
-    if (!category) return '-';
+    if (!listing.category) return '-';
     return (
       <div className="flex items-center space-x-2">
-        {category.icon && (
+        {listing.category.icon && (
           <img
-            src={category.icon.startsWith('http') ? category.icon : `${SERVER_URL}${category.icon}`}
-            alt={category.name}
+            src={
+              listing.category.icon.startsWith('http')
+                ? listing.category.icon
+                : `${SERVER_URL}${listing.category.icon}`
+            }
+            alt={listing.category.name}
             className="h-6 w-6 object-cover"
           />
         )}
-        <span>{category.name}</span>
+        <span>{listing.category.name}</span>
       </div>
     );
   };
 
   const renderRentTime = (listing: any) => {
-    if (
-      listing.status?.toLowerCase() === 'our portfolio' ||
-      listing.status?.toLowerCase() === 'leisure'
-    ) {
-      return '-';
-    }
+    const st = listing.status?.toLowerCase();
+    if (st === 'our portfolio' || st === 'leisure') return '-';
     return listing.rent_time?.name || '-';
   };
 
+  // === JSX ===
   return (
     <div className="space-y-6">
       {isLoading && (
-        <div
-          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[10000]"
-          style={{ pointerEvents: 'all' }}
-        >
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="text-white text-xl">Loading...</div>
         </div>
       )}
 
+      {/* Tabs */}
       <div className="flex space-x-4">
         {(['Our Portfolio', 'Rentals', 'Leisure'] as ActiveTab[]).map((tab) => (
           <Button
@@ -411,13 +394,16 @@ const ListingManager = observer(() => {
         ))}
       </div>
 
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Listing Management</h2>
         <Button onClick={openAddDialog}>
-          <Plus className="mr-2 h-4 w-4" /> Add Listing
+          <Plus className="mr-2 h-4 w-4" />
+          Add Listing
         </Button>
       </div>
 
+      {/* Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -439,7 +425,7 @@ const ListingManager = observer(() => {
                 <TableCell>{listing.price}</TableCell>
                 <TableCell>
                   <Button variant="ghost" onClick={() => toggleFeatured(listing)}>
-                    <Star className="h-4 w-4" color={listing.featured ? 'gold' : 'gray'} />
+                    <Star color={listing.featured ? 'gold' : 'gray'} className="h-4 w-4" />
                   </Button>
                 </TableCell>
                 <TableCell>{renderCategory(listing)}</TableCell>
@@ -448,7 +434,11 @@ const ListingManager = observer(() => {
                   <Button variant="outline" size="sm" onClick={() => openEditDialog(listing)}>
                     <PenSquare className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteListing(listing.id)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteListing(listing.id)}
+                  >
                     <Trash2 className="h-4 w-4 text-red-600" />
                   </Button>
                 </TableCell>
@@ -465,60 +455,64 @@ const ListingManager = observer(() => {
         </Table>
       </div>
 
+      {/* Dialog Form */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl max-h-screen overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingListing ? 'Edit Listing' : 'Add Listing'}</DialogTitle>
             <DialogDescription>
-              {editingListing ? 'Edit the listing details' : 'Fill in the details for the new listing'}
+              {editingListing
+                ? 'Edit the listing details'
+                : 'Fill in the details for the new listing'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Title */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="name">Title *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Listing Title"
-                required
-                onFocus={(e) =>
-                  e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
-                }
+                className={errors.name ? 'border border-red-500' : ''}
               />
+              {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
             </div>
+
             {/* Location */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="address">Location *</Label>
               <Input
                 id="address"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="Location"
-                required
-                onFocus={(e) =>
-                  e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
-                }
+                className={errors.address ? 'border border-red-500' : ''}
               />
+              {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
             </div>
+
             {/* Price on Request */}
             <div className="space-y-2">
               <Label>
                 <input
                   type="checkbox"
                   checked={formData.priceOnRequest}
-                  onChange={(e) => setFormData({ ...formData, priceOnRequest: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, priceOnRequest: e.target.checked })
+                  }
                   className="mr-2"
                 />
                 Price on Request
               </Label>
             </div>
-            {/* Price и Price Period */}
+
+            {/* Price & Period */}
             {!formData.priceOnRequest && (
               <>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="price">Price *</Label>
                   <Input
                     id="price"
@@ -526,29 +520,31 @@ const ListingManager = observer(() => {
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     placeholder="Price"
-                    required
-                    onFocus={(e) =>
-                      e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
-                    }
+                    className={errors.price ? 'border border-red-500' : ''}
                   />
+                  {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
                 </div>
                 {(formData.status.toLowerCase() === 'rentals' ||
                   formData.status.toLowerCase() === 'leisure') && (
-                  <div className="space-y-2">
-                    <Label htmlFor="unit_of_numeration">Price Period</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="unit_of_numeration">Price Period *</Label>
                     <Input
                       id="unit_of_numeration"
                       value={formData.unit_of_numeration}
-                      onChange={(e) => setFormData({ ...formData, unit_of_numeration: e.target.value })}
-                      placeholder="Price Period (e.g. Month, Week, Day)"
-                      onFocus={(e) =>
-                        e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
+                      onChange={(e) =>
+                        setFormData({ ...formData, unit_of_numeration: e.target.value })
                       }
+                      placeholder="e.g. Month, Week, Day"
+                      className={errors.unit_of_numeration ? 'border border-red-500' : ''}
                     />
+                    {errors.unit_of_numeration && (
+                      <p className="text-red-500 text-sm">{errors.unit_of_numeration}</p>
+                    )}
                   </div>
                 )}
               </>
             )}
+
             {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
@@ -556,15 +552,10 @@ const ListingManager = observer(() => {
                 id="description"
                 value={formData.description}
                 onChange={(e) => {
-                  const value = e.target.value;
-                  if (value.length <= 1000) {
-                    setFormData({ ...formData, description: value });
-                  }
+                  const v = e.target.value;
+                  if (v.length <= 1000) setFormData({ ...formData, description: v });
                 }}
                 placeholder="Description"
-                onFocus={(e) =>
-                  e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
-                }
               />
               <div className="text-right text-xs">
                 <span className={formData.description.length >= 1000 ? 'text-red-500' : 'text-gray-500'}>
@@ -572,78 +563,91 @@ const ListingManager = observer(() => {
                 </span>
               </div>
             </div>
+
             {/* Primary Category */}
-            <div className="space-y-2">
-              <Label htmlFor="status">Primary Category</Label>
+            <div className="space-y-1">
+              <Label htmlFor="status">Primary Category *</Label>
               <select
                 id="status"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="border rounded p-2 w-full"
+                className={`border rounded p-2 w-full ${errors.status ? 'border-red-500' : ''}`}
               >
                 <option value="">Select Primary Category</option>
                 <option value="our portfolio">Our Portfolio</option>
                 <option value="leisure">Leisure</option>
                 <option value="rentals">Rentals</option>
               </select>
+              {errors.status && <p className="text-red-500 text-sm">{errors.status}</p>}
             </div>
+
             {/* Category */}
-            <div className="space-y-2">
-              <Label htmlFor="categoryId">Category</Label>
+            <div className="space-y-1">  
+              <Label htmlFor="categoryId">Category *</Label>
               <select
                 id="categoryId"
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="border rounded p-2 w-full"
+                className={`border rounded p-2 w-full ${errors.categoryId ? 'border-red-500' : ''}`}
               >
                 <option value="">Select Category</option>
-                {filteredCategories.map((cat: any) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Rent Time */}
-            {(formData.status.toLowerCase() !== 'our portfolio' &&
-              formData.status.toLowerCase() !== 'leisure') && (
-              <div className="space-y-2">
-                <Label htmlFor="rentTimeId">Rent Time</Label>
-                <select
-                  id="rentTimeId"
-                  value={formData.rentTimeId}
-                  onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
-                  className="border rounded p-2 w-full"
-                >
-                  <option value="">Select Rent Time</option>
-                  {rentTimeStore.rentTimes.map((rt: any) => (
-                    <option key={rt.id} value={rt.id}>
-                      {rt.name}
+                {categoriesStore.categories
+                  .filter((cat: any) => {
+                    const st = formData.status.toLowerCase();
+                    const nm = cat.name.toLowerCase();
+                    if (st === 'leisure') return nm === 'cars' || nm === 'yachts';
+                    if (st === 'our portfolio' || st === 'rentals') return nm !== 'cars' && nm !== 'yachts';
+                    return true;
+                  })
+                  .map((cat: any) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
                     </option>
                   ))}
-                </select>
-              </div>
-            )}
-            {/* Custom fields */}
+              </select>
+              {errors.categoryId && <p className="text-red-500 text-sm">{errors.categoryId}</p>}
+            </div>
+
+            {/* Rent Time */}
+            {formData.status.toLowerCase() !== 'our portfolio' &&
+              formData.status.toLowerCase() !== 'leisure' && (
+                <div className="space-y-1">
+                  <Label htmlFor="rentTimeId">Rent Time *</Label>
+                  <select
+                    id="rentTimeId"
+                    value={formData.rentTimeId}
+                    onChange={(e) => setFormData({ ...formData, rentTimeId: e.target.value })}
+                    className={`border rounded p-2 w-full ${errors.rentTimeId ? 'border-red-500' : ''}`}
+                  >
+                    <option value="">Select Rent Time</option>
+                    {rentTimeStore.rentTimes.map((rt: any) => (
+                      <option key={rt.id} value={rt.id}>
+                        {rt.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.rentTimeId && <p className="text-red-500 text-sm">{errors.rentTimeId}</p>}
+                </div>
+              )}
+
+            {/* Custom Fields */}
             {renderCustomFields()}
-            {/* Image uploads */}
+
+            {/* Images */}
             <div className="space-y-2">
-              <Label htmlFor="images">Images</Label>
+              <Label>Images *</Label>
               {editingListing && renderExistingImages()}
-              {fileFields.map((file, index) => (
-                <div key={index} className="flex items-center gap-2">
+              {fileFields.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2">
                   <Input
                     type="file"
                     multiple
-                    onChange={(e) => handleFileFieldChange(e, index)}
-                    onFocus={(e) =>
-                      e.target.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false })
-                    }
+                    onChange={(e) => handleFileFieldChange(e, idx)}
                   />
                   {file && (
                     <img
                       src={URL.createObjectURL(file)}
-                      alt={`preview-${index}`}
+                      alt={`preview-${idx}`}
                       className="h-12 w-12 object-cover rounded"
                     />
                   )}
@@ -652,32 +656,26 @@ const ListingManager = observer(() => {
               <Button onClick={addFileField} variant="outline">
                 Add Image Field
               </Button>
+              {errors.images && <p className="text-red-500 text-sm">{errors.images}</p>}
             </div>
-            {/* PDF Field (оставляем, как было) */}
+
+            {/* PDF File */}
             <div className="space-y-2">
               <Label>PDF File</Label>
               {editingListing && editingListing.pdfLink && (
-                <div className="flex items-center justify-between bg-gray-100 p-2 rounded">
-                  <div className="text-sm">
-                    Current PDF:&nbsp;
-                    <a
-                      href={editingListing.pdfLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      Read PDF
-                    </a>
-                  </div>
+                <div className="flex items-center bg-gray-100 p-2 rounded">
+                  <a
+                    href={editingListing.pdfLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    Current PDF
+                  </a>
                 </div>
               )}
               <Input type="file" accept="application/pdf" onChange={handlePdfFileChange} />
-              {pdfFile && (
-                <div className="mt-2 text-sm">
-                  Selected PDF:&nbsp;
-                  <span>{pdfFile.name}</span>
-                </div>
-              )}
+              {pdfFile && <p className="text-sm">Selected: {pdfFile.name}</p>}
             </div>
           </div>
 

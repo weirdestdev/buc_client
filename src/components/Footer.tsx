@@ -96,7 +96,7 @@ export default function Footer() {
                 <p>Spain</p>
                 <p className='mt-4'>Carrer de Miguel Machado, 3</p>
                 <p>07181 Palmanova</p>
-                <p>Spain</p>
+                <p className='mb-4'>Spain</p>
                 <p className="mt-4">
                   <a href="mailto:info@businessunit.club" className="hover:text-white transition-colors">
                     info@businessunit.club

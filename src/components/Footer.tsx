@@ -94,8 +94,8 @@ export default function Footer() {
                 <p>Carrer de Sant Magí, 32</p>
                 <p>07013 Palma de Mallorca</p>
                 <p>Spain</p>
-                <p className='mt-4'>Office: Carrer de Miguel</p>
-                <p>Machado, 3, 07181 Palmanova</p>
+                <p className='mt-4'>Carrer de Miguel Machado, 3</p>
+                <p>07181 Palmanova</p>
                 <p>Spain</p>
                 <p className="mt-4">
                   <a href="mailto:info@businessunit.club" className="hover:text-white transition-colors">

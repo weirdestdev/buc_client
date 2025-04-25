@@ -94,6 +94,7 @@ export default function Footer() {
                 <p>Carrer de Sant Magí, 32</p>
                 <p>07013 Palma de Mallorca</p>
                 <p>Spain</p>
+                <p className='mt-4 mb-4'>Office: Carrer de Miguel Machado, 3, 07181 Palmanova, Mallorca</p>
                 <p className="mt-4">
                   <a href="mailto:info@businessunit.club" className="hover:text-white transition-colors">
                     info@businessunit.club
@@ -102,6 +103,11 @@ export default function Footer() {
                 <p className="mt-1">
                   <a href="tel:+34672203674" className="hover:text-white transition-colors">
                     +34 672 203 674
+                  </a>
+                </p>
+                <p className="mt-1">
+                  <a href="tel:+34672203674" className="hover:text-white transition-colors">
+                    +34 655 166 949
                   </a>
                 </p>
                 <p className="mt-4 text-xs">

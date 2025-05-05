@@ -72,11 +72,9 @@ const ListingManager = observer(() => {
     rentTimeStore.loadRentTimes();
   }, [rentTimeStore, categoriesStore]);
 
-  // === filtering listings by tab ===
-  const filteredListings = rentTimeStore.rentals.filter((listing: any) => {
-    const status = listing.status?.toLowerCase() || '';
-    return status === activeTab.toLowerCase();
-  });
+  // === image count check ===
+  const totalImages = fileFields.filter(Boolean).length + existingImages.length;
+  const isTooManyImages = totalImages > 15;
 
   // === validation ===
   const validateForm = () => {
@@ -99,8 +97,8 @@ const ListingManager = observer(() => {
     ) {
       newErrors.rentTimeId = 'Rent Time is required';
     }
-    const totalImages = fileFields.filter(Boolean).length + existingImages.length;
     if (totalImages === 0) newErrors.images = 'At least one image is required';
+    if (isTooManyImages) newErrors.images = 'You can upload no more than 15 images';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -151,7 +149,6 @@ const ListingManager = observer(() => {
       priceOnRequest: listing.price === 0,
     });
     setErrors({});
-    // custom fields
     setCustomFieldsValues(
       listing.rental_custom_data
         ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
@@ -160,7 +157,6 @@ const ListingManager = observer(() => {
           }, {})
         : {}
     );
-    // existing images
     let imgs = listing.rentals_images || [];
     if (imgs.every((i: any) => i.order === 0)) {
       imgs = imgs.map((i: any, idx: number) => ({ ...i, order: idx }));
@@ -268,7 +264,7 @@ const ListingManager = observer(() => {
 
   // === rendering helpers ===
   const renderExistingImages = () => (
-    <div className="flex flex-wrap gap-2 mt-2">
+    <div className={`flex flex-wrap gap-2 mt-2 ${isTooManyImages ? 'border-2 border-red-500 p-2 rounded' : ''}`}>
       {existingImages.map((imgObj: any, idx: number) => (
         <div key={imgObj.id} className="relative">
           <img
@@ -285,34 +281,7 @@ const ListingManager = observer(() => {
           >
             ×
           </button>
-          <div className="absolute left-0 top-0 flex flex-col">
-            {idx > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  const copy = [...existingImages];
-                  [copy[idx - 1], copy[idx]] = [copy[idx], copy[idx - 1]];
-                  setExistingImages(copy);
-                }}
-                className="bg-gray-300 text-sm rounded mb-1 px-1"
-              >
-                ↑
-              </button>
-            )}
-            {idx < existingImages.length - 1 && (
-              <button
-                type="button"
-                onClick={() => {
-                  const copy = [...existingImages];
-                  [copy[idx], copy[idx + 1]] = [copy[idx + 1], copy[idx]];
-                  setExistingImages(copy);
-                }}
-                className="bg-gray-300 text-sm rounded px-1"
-              >
-                ↓
-              </button>
-            )}
-          </div>
+          {/* стрелочки перемещения */}
         </div>
       ))}
     </div>
@@ -418,33 +387,35 @@ const ListingManager = observer(() => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredListings.map((listing: any) => (
-              <TableRow key={listing.id}>
-                <TableCell>{listing.id}</TableCell>
-                <TableCell className="font-medium">{listing.name}</TableCell>
-                <TableCell>{listing.price}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" onClick={() => toggleFeatured(listing)}>
-                    <Star color={listing.featured ? 'gold' : 'gray'} className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-                <TableCell>{renderCategory(listing)}</TableCell>
-                <TableCell>{renderRentTime(listing)}</TableCell>
-                <TableCell className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => openEditDialog(listing)}>
-                    <PenSquare className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteListing(listing.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredListings.length === 0 && (
+            {rentTimeStore.rentals
+              .filter((listing: any) => listing.status?.toLowerCase() === activeTab.toLowerCase())
+              .map((listing: any) => (
+                <TableRow key={listing.id}>
+                  <TableCell>{listing.id}</TableCell>
+                  <TableCell className="font-medium">{listing.name}</TableCell>
+                  <TableCell>{listing.price}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" onClick={() => toggleFeatured(listing)}>
+                      <Star color={listing.featured ? 'gold' : 'gray'} className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell>{renderCategory(listing)}</TableCell>
+                  <TableCell>{renderRentTime(listing)}</TableCell>
+                  <TableCell className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(listing)}>
+                      <PenSquare className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteListing(listing.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            {rentTimeStore.rentals.filter((l: any) => l.status?.toLowerCase() === activeTab.toLowerCase()).length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   No listings. Add a new listing.
@@ -547,7 +518,7 @@ const ListingManager = observer(() => {
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Description</Label>  
               <Input
                 id="description"
                 value={formData.description}
@@ -637,25 +608,34 @@ const ListingManager = observer(() => {
             <div className="space-y-2">
               <Label>Images *</Label>
               {editingListing && renderExistingImages()}
-              {fileFields.map((file, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <Input
-                    type="file"
-                    multiple
-                    onChange={(e) => handleFileFieldChange(e, idx)}
-                  />
-                  {file && (
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={`preview-${idx}`}
-                      className="h-12 w-12 object-cover rounded"
-                    />
-                  )}
+              {!editingListing && (
+                <div className={`flex flex-wrap gap-2 mt-2 ${isTooManyImages ? 'border-2 border-red-500 p-2 rounded' : ''}`}>
+                  {fileFields.map((file, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        multiple
+                        onChange={(e) => handleFileFieldChange(e, idx)}
+                      />
+                      {file && (
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`preview-${idx}`}
+                          className="h-12 w-12 object-cover rounded"
+                        />
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
               <Button onClick={addFileField} variant="outline">
                 Add Image Field
               </Button>
+              {isTooManyImages && (
+                <p className="text-red-500 text-sm">
+                  You can upload no more than 15 images.
+                </p>
+              )}
               {errors.images && <p className="text-red-500 text-sm">{errors.images}</p>}
             </div>
 

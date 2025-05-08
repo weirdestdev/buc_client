@@ -152,9 +152,9 @@ const ListingManager = observer(() => {
     setCustomFieldsValues(
       listing.rental_custom_data
         ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
-            acc[curr.categoriesDataId] = curr.value;
-            return acc;
-          }, {})
+          acc[curr.categoriesDataId] = curr.value;
+          return acc;
+        }, {})
         : {}
     );
     let imgs = listing.rentals_images || [];
@@ -281,7 +281,34 @@ const ListingManager = observer(() => {
           >
             ×
           </button>
-          {/* стрелочки перемещения */}
+          <div className="absolute left-0 top-0 flex flex-col">
+            {idx > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const copy = [...existingImages];
+                  [copy[idx - 1], copy[idx]] = [copy[idx], copy[idx - 1]];
+                  setExistingImages(copy);
+                }}
+                className="bg-gray-300 text-sm rounded mb-1 px-1"
+              >
+                ↑
+              </button>
+            )}
+            {idx < existingImages.length - 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const copy = [...existingImages];
+                  [copy[idx], copy[idx + 1]] = [copy[idx + 1], copy[idx]];
+                  setExistingImages(copy);
+                }}
+                className="bg-gray-300 text-sm rounded px-1"
+              >
+                ↓
+              </button>
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -497,28 +524,28 @@ const ListingManager = observer(() => {
                 </div>
                 {(formData.status.toLowerCase() === 'rentals' ||
                   formData.status.toLowerCase() === 'leisure') && (
-                  <div className="space-y-1">
-                    <Label htmlFor="unit_of_numeration">Price Period *</Label>
-                    <Input
-                      id="unit_of_numeration"
-                      value={formData.unit_of_numeration}
-                      onChange={(e) =>
-                        setFormData({ ...formData, unit_of_numeration: e.target.value })
-                      }
-                      placeholder="e.g. Month, Week, Day"
-                      className={errors.unit_of_numeration ? 'border border-red-500' : ''}
-                    />
-                    {errors.unit_of_numeration && (
-                      <p className="text-red-500 text-sm">{errors.unit_of_numeration}</p>
-                    )}
-                  </div>
-                )}
+                    <div className="space-y-1">
+                      <Label htmlFor="unit_of_numeration">Price Period *</Label>
+                      <Input
+                        id="unit_of_numeration"
+                        value={formData.unit_of_numeration}
+                        onChange={(e) =>
+                          setFormData({ ...formData, unit_of_numeration: e.target.value })
+                        }
+                        placeholder="e.g. Month, Week, Day"
+                        className={errors.unit_of_numeration ? 'border border-red-500' : ''}
+                      />
+                      {errors.unit_of_numeration && (
+                        <p className="text-red-500 text-sm">{errors.unit_of_numeration}</p>
+                      )}
+                    </div>
+                  )}
               </>
             )}
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>  
+              <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 value={formData.description}
@@ -553,7 +580,7 @@ const ListingManager = observer(() => {
             </div>
 
             {/* Category */}
-            <div className="space-y-1">  
+            <div className="space-y-1">
               <Label htmlFor="categoryId">Category *</Label>
               <select
                 id="categoryId"

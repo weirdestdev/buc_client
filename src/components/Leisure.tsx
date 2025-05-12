@@ -84,8 +84,19 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
   };
+  
 
   const renderPropertyCard = (property: any) => {
+
+    const sortedImages = (property.rentals_images || [])
+    .map((img: any, idx: number) => ({
+      ...img,
+      order: typeof img.order === 'number' ? img.order : idx
+    }))
+    .sort((a, b) => a.order - b.order);
+
+  const firstImage = sortedImages[0]?.image;
+
     return (
       <Card
         key={property.id}
@@ -93,9 +104,9 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
         onClick={() => handlePropertyClick(property)}
       >
         <div className="image-loading h-60 relative">
-          {property.rentals_images && property.rentals_images.length > 0 ? (
+          {firstImage ? (
             <img
-              src={property.rentals_images[0].image}
+              src={firstImage}
               alt={property.name}
               className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${loadedImages[property.id] ? 'loaded' : ''}`}
               onLoad={() => handleImageLoad(property.id)}

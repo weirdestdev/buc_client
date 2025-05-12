@@ -48,7 +48,7 @@ interface BaseItemProps {
   unit_of_numeration: string;
   category: { id: number; name: string };
   rent_time: { id: number; name: string };
-  rentals_images: { id: number; image: string }[];
+  rentals_images: { id: number; image: string; order?: number }[];
   rental_custom_data: RentalCustomData[];
   pdfLink?: string;  // Добавляем поле pdfLink
 }
@@ -79,9 +79,16 @@ function PropertyDetailsDialog({
     setAuthDialogOpen(true);
   };
 
-  const allImages = property.rentals_images.length
-    ? property.rentals_images.map(img => img.image)
-    : ["/default-image.jpg"];
+  const sortedImages = [...property.rentals_images]
+    .map((img, idx) => ({
+      ...img,
+      order: typeof img.order === 'number' ? img.order : idx
+    }))
+    .sort((a, b) => a.order! - b.order!);
+
+  const allImages = sortedImages.length
+    ? sortedImages.map(img => img.image)
+    : ['/default-image.jpg'];
 
   return (
     <>

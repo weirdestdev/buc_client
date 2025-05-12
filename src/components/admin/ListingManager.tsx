@@ -168,6 +168,17 @@ const ListingManager = observer(() => {
   };
 
   const addFileField = () => {
+    // Считаем общее кол-во: существующие + уже добавленные новые
+    const currentNew = fileFields.filter((f) => f).length;
+    if (existingImages.length + currentNew >= 15) {
+      setErrors((e) => ({ ...e, images: 'You can upload no more than 15 images' }));
+      return;
+    }
+    // Очищаем ошибку, если она была
+    setErrors((e) => {
+      const { images, ...rest } = e;
+      return rest;
+    });
     setFileFields((f) => [...f, null]);
   };
 
@@ -655,7 +666,11 @@ const ListingManager = observer(() => {
                   ))}
                 </div>
               )}
-              <Button onClick={addFileField} variant="outline">
+              <Button
+                onClick={addFileField}
+                variant="outline"
+                disabled={totalImages >= 15}
+              >
                 Add Image Field
               </Button>
               {isTooManyImages && (
@@ -696,7 +711,7 @@ const ListingManager = observer(() => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 });
 

@@ -48,7 +48,7 @@ interface BaseItemProps {
   unit_of_numeration: string;
   category: { id: number; name: string };
   rent_time: { id: number; name: string };
-  rentals_images: { id: number; image: string }[];
+  rentals_images: { id: number; image: string; order?: number }[];
   rental_custom_data: RentalCustomData[];
   pdfLink?: string;
 }
@@ -79,9 +79,16 @@ function PropertyDetailsDialog({
     setAuthDialogOpen(true);
   };
 
-  const allImages = property.rentals_images.length
-    ? property.rentals_images.map(img => img.image)
-    : ["/default-image.jpg"];
+  const sortedImages = [...property.rentals_images]
+    .map((img, idx) => ({
+      ...img,
+      order: typeof img.order === 'number' ? img.order : idx
+    }))
+    .sort((a, b) => a.order! - b.order!);
+
+  const allImages = sortedImages.length
+    ? sortedImages.map(img => img.image)
+    : ['/default-image.jpg'];
 
   return (
     <>
@@ -161,21 +168,21 @@ function PropertyDetailsDialog({
             </div>
           </div>
           <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-2">
-              {property.pdfLink && (
-                <Button
-                  variant="outline"
-                  onClick={() => window.open(property.pdfLink, '_blank')}
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>View PDF</span>
-                </Button>
-              )}
-              <Button onClick={() => setIsModalOpen(true)}>
-                Request Viewing
-                <ArrowRight className="w-4 h-4 ml-2" />
+            {property.pdfLink && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(property.pdfLink, '_blank')}
+                className="flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                <span>View PDF</span>
               </Button>
-            </div>
+            )}
+            <Button onClick={() => setIsModalOpen(true)}>
+              Request Viewing
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       {/* Передаём rentalName из имени объекта недвижимости */}

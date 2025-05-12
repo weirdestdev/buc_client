@@ -209,7 +209,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
               <div className="p-8">
                 <h3 className="text-xl font-display font-medium mb-2">See More Options</h3>
                 <p className="text-muted-foreground mb-4">
-                  Create an account to access our full portfolio of exclusive properties
+                  Create an account to access our full portfolio of exclusive offerings
                 </p>
                 <Button onClick={() => openAuthDialog && openAuthDialog("register")} className="mt-2 transition-all duration-500 hover:scale-105 hover:shadow-lg hover:shadow-amber-200/20 group" size="lg">
                   <span className="group-hover:mr-1 transition-all duration-300">Sign up</span>

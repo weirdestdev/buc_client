@@ -635,7 +635,7 @@ const ListingManager = observer(() => {
             <div className="space-y-2">
               <Label>Images *</Label>
               {editingListing && renderExistingImages()}
-              {!editingListing && (
+              {(
                 <div className={`flex flex-wrap gap-2 mt-2 ${isTooManyImages ? 'border-2 border-red-500 p-2 rounded' : ''}`}>
                   {fileFields.map((file, idx) => (
                     <div key={idx} className="flex items-center gap-2">

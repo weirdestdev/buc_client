@@ -11,12 +11,19 @@ import {
   fetchRentals,
   fetchFeaturedRentals,
   fetchRentalsByCategory,
-  fetchStatusRentals // Импорт нового метода из rentAPI
+  fetchStatusRentals,
+  deleteRentalImage
 } from "../http/rentAPI";
 
 export interface IRentTime {
   id: number;
   name: string;
+}
+
+export interface IRentalImage {
+  id: number;
+  image: string;
+  order: number;
 }
 
 export interface IRental {
@@ -30,7 +37,7 @@ export interface IRental {
   featured: boolean;
   categoryId: number;
   rentTimeId: number;
-  images: string[];
+  images: IRentalImage[];
   pdfLink?: string;
 }
 
@@ -183,13 +190,35 @@ class RentTimeStore {
     }
   }
 
+  // Удаление картинки у объявления
+  async removeRentalImage(rentalId: number, imageId: number) {
+    this.isLoading = true;
+    try {
+      await deleteRentalImage(imageId);
+      runInAction(() => {
+        this.rentals = this.rentals.map(rental => {
+          if (rental.id !== rentalId) return rental;
+          return {
+            ...rental,
+            images: rental.images.filter(img => img.id !== imageId)
+          };
+        });
+      });
+    } catch (error) {
+      console.error("Ошибка удаления картинки:", error);
+    } finally {
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    }
+  }
+
   // Загрузка избранных объявлений
   async loadFeaturedRentals() {
     this.isLoading = true;
     try {
       const data = await fetchFeaturedRentals();
       runInAction(() => {
-        // В зависимости от логики приложения можно обновить весь список или хранить отдельно
         this.rentals = data;
       });
     } catch (error) {
@@ -207,7 +236,6 @@ class RentTimeStore {
     try {
       const data = await fetchRentalsByCategory(categoryId);
       runInAction(() => {
-        // Аналогично: можно сохранить отдельно или обновить общий список
         this.rentals = data;
       });
     } catch (error) {
@@ -225,7 +253,6 @@ class RentTimeStore {
     try {
       const data = await fetchStatusRentals(status);
       runInAction(() => {
-        // Можно обновлять общий список объявлений или хранить отдельно, в зависимости от логики приложения
         this.rentals = data;
       });
     } catch (error) {

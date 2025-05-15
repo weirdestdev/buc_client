@@ -40,7 +40,7 @@ interface IListFormData {
 type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
 const ListingManager = observer(() => {
-  const { rentTimeStore, categoriesStore } = useContext(Context)!;
+    const { rentTimeStore, categoriesStore } = useContext(Context)!;
 
   // === state ===
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
@@ -72,9 +72,23 @@ const ListingManager = observer(() => {
     rentTimeStore.loadRentTimes();
   }, [rentTimeStore, categoriesStore]);
 
-  // === image count check ===
+  // === helpers ===
   const totalImages = fileFields.filter(Boolean).length + existingImages.length;
   const isTooManyImages = totalImages > 15;
+
+  // Удаление картинки по API + обновление локального состояния
+  const handleDeleteImage = async (imgId: number) => {
+    if (!editingListing) return;
+    setIsLoading(true);
+    try {
+      await rentTimeStore.removeRentalImage(editingListing.id, imgId);
+      setExistingImages((imgs) => imgs.filter((i) => i.id !== imgId));
+    } catch (err) {
+      console.error("Ошибка удаления картинки:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // === validation ===
   const validateForm = () => {
@@ -273,7 +287,7 @@ const ListingManager = observer(() => {
     }
   };
 
-  // === rendering helpers ===
+   // === rendering helpers ===
   const renderExistingImages = () => (
     <div className={`flex flex-wrap gap-2 mt-2 ${isTooManyImages ? 'border-2 border-red-500 p-2 rounded' : ''}`}>
       {existingImages.map((imgObj: any, idx: number) => (
@@ -285,9 +299,7 @@ const ListingManager = observer(() => {
           />
           <button
             type="button"
-            onClick={() =>
-              setExistingImages((imgs) => imgs.filter((i) => i.id !== imgObj.id))
-            }
+            onClick={() => handleDeleteImage(imgObj.id)}
             className="absolute top-0 right-0 bg-red-600 text-white rounded-full px-1"
           >
             ×

@@ -19,6 +19,12 @@ export const updateRentTime = async (id: number, rentTimeData: { name: string })
   return data;
 };
 
+// Удаление картинки по её ID
+export const deleteRentalImage = async (id: number) => {
+  const { data } = await $authHost.delete(`api/rentals/images/${id}`);
+  return data;
+};
+
 // Удаление записи времени аренды по ID
 export const deleteRentTime = async (id: number) => {
   const { data } = await $authHost.delete(`api/rentals/renttime/${id}`);

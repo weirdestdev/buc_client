@@ -5,7 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PropertyDetailsDialog from '@/components/PropertyDetailsDialogThree';
 import { Context } from '@/main';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { HashLink as Link } from 'react-router-hash-link';
 import NotApprovedDialog from './NotApprovedDialog';
 
 interface RentalsProps {
@@ -240,7 +241,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
             <div className="text-center mt-12">
               <Link
                 to="/member-panel#portfolio"
-                reloadDocument
+                scroll={el => el.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 className="inline-block see-more text-primary font-medium"
               >
                 See more listings

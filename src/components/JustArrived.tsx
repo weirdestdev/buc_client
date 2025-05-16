@@ -254,9 +254,10 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
               <Link
                 to="/member-panel#just-arrived"
                 scroll={el => el.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="see-more"
+                className="inline-block see-more text-primary font-medium"
               >
                 See more listings
+                <ArrowRight className="inline-block ml-1 align-middle" />
               </Link>
             </div>
           )}

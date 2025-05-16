@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, ArrowRight, Lock, Settings } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { HashLink as Link } from 'react-router-hash-link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -216,7 +217,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
             <div className="text-center mt-12">
               <Link
                 to="/member-panel#leisure"
-                reloadDocument
+                scroll={el => el.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 className="inline-block see-more text-primary font-medium"
               >
                 See more listings

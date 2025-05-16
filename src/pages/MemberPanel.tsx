@@ -27,7 +27,6 @@ const MemberPanel = () => {
   }
   const { userStore } = rootStore;
 
-  // при переходе по hash-ссылке — плавно скроллим к целевому элементу
   useLayoutEffect(() => {
     if (location.hash) {
       const id = location.hash.slice(1);
@@ -37,7 +36,6 @@ const MemberPanel = () => {
       }
     }
   }, [location.hash]);
-
 
   const handleLogout = () => {
     userStore.logout(); // вызываем метод logout из store

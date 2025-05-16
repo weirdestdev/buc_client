@@ -27,17 +27,6 @@ const MemberPanel = () => {
   }
   const { userStore } = rootStore;
 
-  useLayoutEffect(() => {
-    if (location.hash) {
-      const id = location.hash.slice(1);
-      const el = document.getElementById(id);
-      if (el) {
-        // мгновенно прыгаем к началу секции, без анимации
-        el.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'auto' });
-      }
-    }
-  }, [location.hash]);
-
   const handleLogout = () => {
     userStore.logout(); // вызываем метод logout из store
     toast({
@@ -48,6 +37,13 @@ const MemberPanel = () => {
   };
 
   return (
+    <>
+    <style>{`
+        html, body {
+          scroll-behavior: auto !important;
+        }
+      `}</style>
+
     <div className="min-h-screen flex flex-col">
       <Navbar
         inMemberPanel={true}
@@ -117,7 +113,7 @@ const MemberPanel = () => {
         onOpenChange={setSettingsOpen}
       />
     </div>
-  );
+  </>);
 };
 
 export default MemberPanel;

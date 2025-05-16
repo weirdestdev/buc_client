@@ -27,10 +27,8 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
   const location = useLocation();
   const onMemberPanelRoot = location.pathname === '/member-panel';
 
-  const [loading, setLoading] = useState(true);
   useEffect(() => {
     async function loadData() {
-      setLoading(true);
       // Загружаем все времена аренды и все объявления (rentals)
       await rentTimeStore.loadRentTimes();
       await rentTimeStore.loadRentalsByStatus('rentals');
@@ -54,19 +52,10 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
       }
 
       setFilteredProperties(rentals);
-      setLoading(false);
     }
     loadData();
   }, [selectedRentTime, sortDirection, rentTimeStore, location.pathname]);
 
-   useEffect(() => {
-    if (!loading && location.hash === '#portfolio') {
-      const el = document.getElementById('portfolio');
-      if (el) {
-        el.scrollIntoView({ behavior: 'auto', block: 'start' });
-      }
-    }
-  }, [loading, location.hash]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));

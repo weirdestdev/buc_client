@@ -143,7 +143,7 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
           variant: "destructive",
         });
       }).finally(() => {
-        setTimeout(() => onOpenChange(false), 2000);
+        setTimeout(() => {onOpenChange(false); window.location.reload();}, 2000);
       });
   };
 
@@ -161,7 +161,7 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
         title: "Account created",
         description: "Welcome to Business Unit Club. Your request will be reviewed by our team.",
       });
-      setTimeout(() => onOpenChange(false), 1500);
+      setTimeout(() => {onOpenChange(false); window.location.reload();}, 1500);
     } catch (error: any) {
       let message = "Invalid credentials or server error.";
       if (error.response && error.response.data && error.response.data.message) {

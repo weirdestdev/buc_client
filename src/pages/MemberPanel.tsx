@@ -32,7 +32,8 @@ const MemberPanel = () => {
       const id = location.hash.slice(1);
       const el = document.getElementById(id);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // мгновенно прыгаем к началу секции, без анимации
+        el.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'auto' });
       }
     }
   }, [location.hash]);

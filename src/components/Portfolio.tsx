@@ -232,7 +232,8 @@ const onMemberPanelRoot = location.pathname === '/member-panel';
               </div>
             </TabsContent>
           </Tabs>
-          {userStore.isAuth &&
+        </div>
+        {userStore.isAuth &&
             userStore.user?.status === 'approved' &&
             !onMemberPanelRoot && (
               <div className="text-center mt-8">
@@ -245,7 +246,6 @@ const onMemberPanelRoot = location.pathname === '/member-panel';
                 </a>
               </div>
             )}
-        </div>
 
         {/* Если пользователь не авторизован, предлагаем зарегистрироваться */}
         {!userStore.isAuth && (

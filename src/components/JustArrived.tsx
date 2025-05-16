@@ -245,20 +245,20 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {filteredProperties.map(renderPropertyCard)}
           </div>
-          {userStore.isAuth &&
-            userStore.user?.status === 'approved' &&
-            !onMemberPanelRoot && (
-              <div className="text-center mt-8">
-                <a
-                  href="/member-panel#just-arrived"
-                  className="inline-block see-more text-primary font-medium"
-                >
-                  See more listings
-                  <ArrowRight className="inline-block ml-1 align-middle" />
-                </a>
-              </div>
-            )}
         </div>
+        {userStore.isAuth &&
+          userStore.user?.status === 'approved' &&
+          !onMemberPanelRoot && (
+            <div className="text-center mt-8">
+              <a
+                href="/member-panel#just-arrived"
+                className="inline-block see-more text-primary font-medium"
+              >
+                See more listings
+                <ArrowRight className="inline-block ml-1 align-middle" />
+              </a>
+            </div>
+          )}
       </div>
 
       <PropertyDetailsDialog

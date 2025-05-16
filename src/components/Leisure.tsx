@@ -24,7 +24,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
   const { rentTimeStore, userStore } = useContext(Context)!;
   const [notApprovedDialogOpen, setNotApprovedDialogOpen] = useState(false);
   const onMemberPanelRoot = location.pathname === '/member-panel';
-  
+
   useEffect(() => {
     async function loadProperties() {
       let properties = [];
@@ -215,7 +215,9 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
           !onMemberPanelRoot && (
             <div className="text-center mt-12">
               <a
-                href="/member-panel#leisure"
+                onClick={() => {
+                  window.location.href = '/member-panel#leisure';
+                }}
                 className="inline-block see-more text-primary font-medium"
               >
                 See more listings

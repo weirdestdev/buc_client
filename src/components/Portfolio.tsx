@@ -239,7 +239,9 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
           !onMemberPanelRoot && (
             <div className="text-center mt-12">
               <a
-                href="/member-panel#portfolio"
+                onClick={() => {
+                  window.location.href = '/member-panel#portfolio';
+                }}
                 className="inline-block see-more text-primary font-medium"
               >
                 See more listings

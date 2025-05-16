@@ -226,66 +226,64 @@ const ListingManager = observer(() => {
   };
 
   const handleSaveListing = async () => {
-    if (!validateForm()) return;
-    setIsDialogOpen(false);
-    setIsLoading(true);
-    try {
-      const form = new FormData();
-      form.append('name', formData.name);
-      form.append('description', formData.description);
-      form.append('address', formData.address);
-      form.append('price', formData.priceOnRequest ? '0' : formData.price);
-      if (
-        !formData.priceOnRequest &&
-        ['rentals', 'leisure'].includes(formData.status.toLowerCase())
-      ) {
-        form.append('unit_of_numeration', formData.unit_of_numeration);
-      }
-      form.append('status', formData.status);
-      form.append('featured', JSON.stringify(formData.featured));
-      form.append('categoryId', formData.categoryId);
-      if (!['our portfolio', 'leisure'].includes(formData.status.toLowerCase())) {
-        form.append('rentTimeId', formData.rentTimeId);
-      }
-      form.append(
-        'customData',
-        JSON.stringify(
-          Object.entries(customFieldsValues).map(([fieldId, value]) => ({
-            categoriesDataId: fieldId,
-            value,
-          }))
-        )
-      );
-      if (fileFields.some((f) => f)) {
-        fileFields.forEach((f) => f && form.append('images', f));
-      } else {
-        form.append(
-          'updatedImages',
-          JSON.stringify(
-            existingImages.map((img, idx) => ({
-              id: img.id,
-              image: img.image,
-              order: idx,
-            }))
-          )
-        );
-      }
-      if (pdfFile) form.append('pdf', pdfFile);
+  if (!validateForm()) return;
+  setIsDialogOpen(false);
+  setIsLoading(true);
 
-      if (editingListing) {
-        await rentTimeStore.updateRental(editingListing.id, form);
-      } else {
-        await rentTimeStore.addRental(form);
-      }
-      await rentTimeStore.loadRentals();
-      setFileFields([]);
-      setPdfFile(null);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+  try {
+    const form = new FormData();
+    form.append('name', formData.name);
+    form.append('description', formData.description);
+    form.append('address', formData.address);
+    form.append('price', formData.priceOnRequest ? '0' : formData.price);
+    if (!formData.priceOnRequest && ['rentals', 'leisure'].includes(formData.status.toLowerCase())) {
+      form.append('unit_of_numeration', formData.unit_of_numeration);
     }
-  };
+    form.append('status', formData.status);
+    form.append('featured', JSON.stringify(formData.featured));
+    form.append('categoryId', formData.categoryId);
+    if (!['our portfolio', 'leisure'].includes(formData.status.toLowerCase())) {
+      form.append('rentTimeId', formData.rentTimeId);
+    }
+
+    // Всегда шлём порядок старых картинок
+    form.append(
+      'updatedImages',
+      JSON.stringify(
+        existingImages.map((img, idx) => ({
+          id: img.id,
+          order: idx
+        }))
+      )
+    );
+
+    // Всегда шлём новые файлы (если они есть)
+    fileFields.forEach(f => {
+      if (f) {
+        form.append('images', f);
+      }
+    });
+
+    // PDF
+    if (pdfFile) {
+      form.append('pdf', pdfFile);
+    }
+
+    if (editingListing) {
+      await rentTimeStore.updateRental(editingListing.id, form);
+    } else {
+      await rentTimeStore.addRental(form);
+    }
+
+    await rentTimeStore.loadRentals();
+    setFileFields([]);
+    setPdfFile(null);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
    // === rendering helpers ===
   const renderExistingImages = () => (

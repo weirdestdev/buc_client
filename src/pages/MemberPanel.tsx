@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -15,6 +15,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Context } from '../main'; 
 
 const MemberPanel = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -25,6 +26,21 @@ const MemberPanel = () => {
     throw new Error("RootStore не предоставлен в контексте");
   }
   const { userStore } = rootStore;
+
+  // при переходе по hash-ссылке — плавно скроллим к целевому элементу
+  useEffect(() => {
+    if (location.hash) {
+      // ждём, пока DOM обновится
+      setTimeout(() => {
+        const id = location.hash.replace('#', '');
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 0);
+    }
+  }, [location.hash]);
+
 
   const handleLogout = () => {
     userStore.logout(); // вызываем метод logout из store

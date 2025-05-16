@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { HashLink as Link } from 'react-router-hash-link';
 import {
   ArrowDownAZ,
   ArrowUpAZ,
@@ -250,16 +251,13 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           userStore.user?.status === 'approved' &&
           location.pathname !== '/member-panel' && (
             <div className="text-center mt-8">
-              <a
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.location.assign('/member-panel#just-arrived');
-                }}
-                className="inline-block see-more text-primary font-medium cursor-pointer"
+              <Link
+                to="/member-panel#just-arrived"
+                scroll={el => el.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="see-more"
               >
                 See more listings
-                <ArrowRight className="inline-block ml-1 align-middle" />
-              </a>
+              </Link>
             </div>
           )}
       </div>

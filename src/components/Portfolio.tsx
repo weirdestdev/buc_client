@@ -25,9 +25,12 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
 
   const { rentTimeStore, userStore } = useContext(Context)!;
   const location = useLocation();
-const onMemberPanelRoot = location.pathname === '/member-panel';
+  const onMemberPanelRoot = location.pathname === '/member-panel';
+
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     async function loadData() {
+      setLoading(true);
       // Загружаем все времена аренды и все объявления (rentals)
       await rentTimeStore.loadRentTimes();
       await rentTimeStore.loadRentalsByStatus('rentals');
@@ -51,10 +54,19 @@ const onMemberPanelRoot = location.pathname === '/member-panel';
       }
 
       setFilteredProperties(rentals);
+      setLoading(false);
     }
     loadData();
   }, [selectedRentTime, sortDirection, rentTimeStore, location.pathname]);
 
+   useEffect(() => {
+    if (!loading && location.hash === '#portfolio') {
+      const el = document.getElementById('portfolio');
+      if (el) {
+        el.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+    }
+  }, [loading, location.hash]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));
@@ -234,18 +246,18 @@ const onMemberPanelRoot = location.pathname === '/member-panel';
           </Tabs>
         </div>
         {userStore.isAuth &&
-            userStore.user?.status === 'approved' &&
-            !onMemberPanelRoot && (
-              <div className="text-center mt-12">
-                <a
-                  href="/member-panel#portfolio"
-                  className="inline-block see-more text-primary font-medium"
-                >
-                  See more listings
-                  <ArrowRight className="inline-block ml-1 align-middle" />
-                </a>
-              </div>
-            )}
+          userStore.user?.status === 'approved' &&
+          !onMemberPanelRoot && (
+            <div className="text-center mt-12">
+              <a
+                href="/member-panel#portfolio"
+                className="inline-block see-more text-primary font-medium"
+              >
+                See more listings
+                <ArrowRight className="inline-block ml-1 align-middle" />
+              </a>
+            </div>
+          )}
 
         {/* Если пользователь не авторизован, предлагаем зарегистрироваться */}
         {!userStore.isAuth && (

@@ -35,9 +35,11 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const { rentTimeStore, userStore } = useContext(Context)!;
 
   const onMemberPanelRoot = location.pathname === '/member-panel';
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProperties() {
+      setLoading(true);
       let properties = [];
       await rentTimeStore.loadRentalsByStatus('our portfolio');
       properties = rentTimeStore.rentals;
@@ -68,9 +70,19 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       );
 
       setFilteredProperties(result);
+      setLoading(false);
     }
     loadProperties();
   }, [selectedCategory, sortDirection, rentTimeStore, location.pathname]);
+
+  useEffect(() => {
+    if (!loading && location.hash === '#just-arrived') {
+      const el = document.getElementById('just-arrived');
+      if (el) {
+        el.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+    }
+  }, [loading, location.hash]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({

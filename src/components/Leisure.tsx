@@ -24,8 +24,11 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
   const { rentTimeStore, userStore } = useContext(Context)!;
   const [notApprovedDialogOpen, setNotApprovedDialogOpen] = useState(false);
   const onMemberPanelRoot = location.pathname === '/member-panel';
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     async function loadProperties() {
+      setLoading(true);
       let properties = [];
       // Загружаем данные с сервера через store
       await rentTimeStore.loadRentalsByStatus('leisure');
@@ -57,9 +60,19 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
       );
 
       setFilteredProperties(result);
+      setLoading(false);
     }
     loadProperties();
   }, [selectedCategory, sortDirection, rentTimeStore, location.pathname]);
+
+  useEffect(() => {
+    if (!loading && location.hash === '#leisure') {
+      const el = document.getElementById('leisure');
+      if (el) {
+        el.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+    }
+  }, [loading, location.hash]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));

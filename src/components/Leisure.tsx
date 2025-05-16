@@ -212,7 +212,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
           {userStore.isAuth && userStore.user?.status === 'approved' && (
             <div className="text-center mt-8">
               <a
-                href="/member-panel#{SECTION_ID}"
+                href="/member-panel#leisure"
                 className="inline-block see-more text-primary font-medium"
               >
                 See more listings

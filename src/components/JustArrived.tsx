@@ -246,7 +246,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           {userStore.isAuth && userStore.user?.status === 'approved' && (
             <div className="text-center mt-8">
               <a
-                href="/member-panel#{SECTION_ID}"
+                href="/member-panel#just-arrived"
                 className="inline-block see-more text-primary font-medium"
               >
                 See more listings

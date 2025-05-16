@@ -243,7 +243,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {filteredProperties.map(renderPropertyCard)}
           </div>
-          {userStore.isAuth && userStore.user?.status !== 'approved' && (
+          {userStore.isAuth && userStore.user?.status === 'approved' && (
             <div className="text-center mt-8">
               <a
                 href="/member-panel#{SECTION_ID}"

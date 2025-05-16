@@ -80,17 +80,17 @@ const MemberPanel = () => {
           
           <div className="space-y-8">
             {/* Rentals first (justArrived component displays for sale properties here) */}
-            <div>
+            <div id="just-arrived">
               <JustArrived />
             </div>
             
             {/* Properties for Sale (Portfolio component displays rentals here) */}
-            <div>
+            <div id="portfolio">
               <Portfolio />
             </div>
             
             {/* Leisure offerings */}
-            <div>
+            <div id="leisure">
               <Leisure />
             </div>
           </div>

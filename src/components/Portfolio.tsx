@@ -232,7 +232,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
               </div>
             </TabsContent>
           </Tabs>
-          {userStore.isAuth && userStore.user?.status !== 'approved' && (
+          {userStore.isAuth && userStore.user?.status === 'approved' && (
             <div className="text-center mt-8">
               <a
                 href="/member-panel#{SECTION_ID}"

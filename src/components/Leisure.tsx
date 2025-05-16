@@ -23,7 +23,7 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
   const { rentTimeStore, userStore } = useContext(Context)!;
   const [notApprovedDialogOpen, setNotApprovedDialogOpen] = useState(false);
-
+const onMemberPanelRoot = location.pathname === '/member-panel';
   useEffect(() => {
     async function loadProperties() {
       let properties = [];
@@ -209,17 +209,19 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
             {filteredProperties.map(renderPropertyCard)}
           </div>
 
-          {userStore.isAuth && userStore.user?.status === 'approved' && (
-            <div className="text-center mt-8">
-              <a
-                href="/member-panel#leisure"
-                className="inline-block see-more text-primary font-medium"
-              >
-                See more listings
-                <ArrowRight className="inline-block ml-1 align-middle" />
-              </a>
-            </div>
-          )}
+          {userStore.isAuth &&
+            userStore.user?.status === 'approved' &&
+            !onMemberPanelRoot && (
+              <div className="text-center mt-8">
+                <a
+                  href="/member-panel#just-arrived"
+                  className="inline-block see-more text-primary font-medium"
+                >
+                  See more listings
+                  <ArrowRight className="inline-block ml-1 align-middle" />
+                </a>
+              </div>
+            )}
         </div>
 
         {/* Если пользователь не авторизован, предлагаем зарегистрироваться */}

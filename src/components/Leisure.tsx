@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { ArrowDownAZ, ArrowUpAZ, MapPin, EuroIcon, CalendarDays, Bed, Bath, ArrowRight, Lock, Settings } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -214,15 +214,14 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
           userStore.user?.status === 'approved' &&
           !onMemberPanelRoot && (
             <div className="text-center mt-12">
-              <a
-                onClick={() => {
-                  window.location.href = '/member-panel#leisure';
-                }}
+              <Link
+                to="/member-panel#leisure"
+                reloadDocument
                 className="inline-block see-more text-primary font-medium"
               >
                 See more listings
                 <ArrowRight className="inline-block ml-1 align-middle" />
-              </a>
+              </Link>
             </div>
           )}
 

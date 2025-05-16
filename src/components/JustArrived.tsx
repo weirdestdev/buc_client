@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   ArrowDownAZ,
   ArrowUpAZ,
@@ -249,16 +249,15 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
         {userStore.isAuth &&
           userStore.user?.status === 'approved' &&
           !onMemberPanelRoot && (
-            <div className="text-center mt-12">
-              <a
-                onClick={() => {
-                  window.location.href = '/member-panel#just-arrived';
-                }}
+            <div className="text-center mt-8">
+              <Link
+                to="/member-panel#just-arrived"
+                reloadDocument
                 className="inline-block see-more text-primary font-medium"
               >
                 See more listings
                 <ArrowRight className="inline-block ml-1 align-middle" />
-              </a>
+              </Link>
             </div>
           )}
       </div>

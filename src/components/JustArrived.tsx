@@ -248,16 +248,18 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
         </div>
         {userStore.isAuth &&
           userStore.user?.status === 'approved' &&
-          !onMemberPanelRoot && (
+          location.pathname !== '/member-panel' && (
             <div className="text-center mt-8">
-              <Link
-                to="/member-panel#just-arrived"
-                reloadDocument
-                className="inline-block see-more text-primary font-medium"
+              <a
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.assign('/member-panel#just-arrived');
+                }}
+                className="inline-block see-more text-primary font-medium cursor-pointer"
               >
                 See more listings
                 <ArrowRight className="inline-block ml-1 align-middle" />
-              </Link>
+              </a>
             </div>
           )}
       </div>

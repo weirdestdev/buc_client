@@ -84,18 +84,18 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
   };
-  
+
 
   const renderPropertyCard = (property: any) => {
 
     const sortedImages = (property.rentals_images || [])
-    .map((img: any, idx: number) => ({
-      ...img,
-      order: typeof img.order === 'number' ? img.order : idx
-    }))
-    .sort((a, b) => a.order - b.order);
+      .map((img: any, idx: number) => ({
+        ...img,
+        order: typeof img.order === 'number' ? img.order : idx
+      }))
+      .sort((a, b) => a.order - b.order);
 
-  const firstImage = sortedImages[0]?.image;
+    const firstImage = sortedImages[0]?.image;
 
     return (
       <Card
@@ -207,6 +207,15 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {filteredProperties.map(renderPropertyCard)}
+            <div className="text-center mt-8">
+              <a
+                href="/member-panel#leisure"
+                className="inline-block see-more text-primary font-medium"
+              >
+                See more listings
+                <ArrowRight className="inline-block ml-1 align-middle" />
+              </a>
+            </div>
           </div>
         </div>
 

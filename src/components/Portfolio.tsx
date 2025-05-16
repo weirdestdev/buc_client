@@ -232,15 +232,17 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
               </div>
             </TabsContent>
           </Tabs>
-          <div className="text-center mt-8">
-            <a
-              href="/member-panel#portfolio"
-              className="inline-block see-more text-primary font-medium"
-            >
-              See more listings
-              <ArrowRight className="inline-block ml-1 align-middle" />
-            </a>
-          </div>
+          {userStore.isAuth && userStore.user?.status !== 'approved' && (
+            <div className="text-center mt-8">
+              <a
+                href="/member-panel#{SECTION_ID}"
+                className="inline-block see-more text-primary font-medium"
+              >
+                See more listings
+                <ArrowRight className="inline-block ml-1 align-middle" />
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Если пользователь не авторизован, предлагаем зарегистрироваться */}

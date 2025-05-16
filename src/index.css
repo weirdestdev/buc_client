@@ -198,3 +198,22 @@
     animation: enhanced-gradient-slow 8s ease infinite;
   }
 }
+
+.see-more {
+  position: relative;
+  text-decoration: none;
+}
+.see-more::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 1px !important;
+  background-color: #000 !important;
+  transition: width 0.3s ease;
+}
+.see-more:hover::after {
+  width: 100% !important;
+}

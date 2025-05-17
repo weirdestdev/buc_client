@@ -32,12 +32,14 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
   const [notApprovedDialogOpen, setNotApprovedDialogOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const { rentTimeStore, userStore } = useContext(Context)!;
 
   const onMemberPanelRoot = location.pathname === '/member-panel';
 
   useEffect(() => {
     async function loadProperties() {
+      setLoaded(false);
       let properties = [];
       await rentTimeStore.loadRentalsByStatus('our portfolio');
       properties = rentTimeStore.rentals;
@@ -68,9 +70,20 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       );
       
       setFilteredProperties(result);
+      setLoaded(true);
     }
     loadProperties();
   }, [selectedCategory, sortDirection, rentTimeStore, location.pathname]);
+
+  useEffect(() => {
+    if (location.hash === '#just-arrived' && loaded) {
+      // ждем, пока React вставит элементы, а браузер срендерит
+      requestAnimationFrame(() => {
+        const el = document.getElementById('just-arrived');
+        if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+      });
+    }
+  }, [loaded, location.hash]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({

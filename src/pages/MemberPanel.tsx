@@ -35,7 +35,7 @@ const MemberPanel = () => {
           const el = document.getElementById('just-arrived');
           if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
         });
-      }, 400);
+      }, 800);
 
       // очистка таймера, если хук отработал повторно или компонент размонтировался
       return () => clearTimeout(timer);
@@ -48,7 +48,7 @@ const MemberPanel = () => {
           const el = document.getElementById('leisure');
           if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
         });
-      }, 400);
+      }, 800);
 
       // очистка таймера, если хук отработал повторно или компонент размонтировался
       return () => clearTimeout(timer);
@@ -61,7 +61,7 @@ const MemberPanel = () => {
           const el = document.getElementById('portfolio');
           if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
         });
-      }, 400);
+      }, 800);
 
       // очистка таймера, если хук отработал повторно или компонент размонтировался
       return () => clearTimeout(timer);

@@ -38,12 +38,6 @@ const MemberPanel = () => {
 
   return (
     <>
-      <style>{`
-        html, body {
-          scroll-behavior: auto !important;
-        }
-      `}</style>
-
       <div className="min-h-screen flex flex-col">
         <Navbar
           inMemberPanel={true}

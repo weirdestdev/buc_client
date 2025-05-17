@@ -23,7 +23,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
   const [notApprovedDialogOpen, setNotApprovedDialogOpen] = useState(false);
-
+  const [loaded, setLoaded] = useState(false);
   const { rentTimeStore, userStore } = useContext(Context)!;
   const location = useLocation();
   const onMemberPanelRoot = location.pathname === '/member-panel';
@@ -53,10 +53,20 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
       }
 
       setFilteredProperties(rentals);
+      setLoaded(true);
     }
     loadData();
   }, [selectedRentTime, sortDirection, rentTimeStore, location.pathname]);
 
+  useEffect(() => {
+    if (location.hash === '#portfolio' && loaded) {
+      // ждем, пока React вставит элементы, а браузер срендерит
+      requestAnimationFrame(() => {
+        const el = document.getElementById('portfolio');
+        if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+      });
+    }
+  }, [loaded, location.hash]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));

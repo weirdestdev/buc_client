@@ -38,7 +38,6 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
   const onMemberPanelRoot = location.pathname === '/member-panel';
 
   useEffect(() => {
-    let active = true;
     async function loadProperties() {
       let properties = [];
       await rentTimeStore.loadRentalsByStatus('our portfolio');
@@ -68,7 +67,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       result.sort((a, b) =>
         sortDirection === 'asc' ? a.price - b.price : b.price - a.price
       );
-      if (!active) return;
+      
       setFilteredProperties(result);
       setLoaded(true);
     }

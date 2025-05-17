@@ -27,6 +27,47 @@ const MemberPanel = () => {
   }
   const { userStore } = rootStore;
 
+  useEffect(() => {
+    if (location.hash === '#just-arrived') {
+      // ждём 400 мс, затем даём браузеру отрисовать DOM и выполняем скролл
+      const timer = setTimeout(() => {
+        requestAnimationFrame(() => {
+          const el = document.getElementById('just-arrived');
+          if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        });
+      }, 400);
+
+      // очистка таймера, если хук отработал повторно или компонент размонтировался
+      return () => clearTimeout(timer);
+    }
+
+    if (location.hash === '#leisure') {
+      // ждём 400 мс, затем даём браузеру отрисовать DOM и выполняем скролл
+      const timer = setTimeout(() => {
+        requestAnimationFrame(() => {
+          const el = document.getElementById('leisure');
+          if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        });
+      }, 400);
+
+      // очистка таймера, если хук отработал повторно или компонент размонтировался
+      return () => clearTimeout(timer);
+    }
+
+    if (location.hash === '#portfolio') {
+      // ждём 400 мс, затем даём браузеру отрисовать DOM и выполняем скролл
+      const timer = setTimeout(() => {
+        requestAnimationFrame(() => {
+          const el = document.getElementById('portfolio');
+          if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        });
+      }, 400);
+
+      // очистка таймера, если хук отработал повторно или компонент размонтировался
+      return () => clearTimeout(timer);
+    }
+  }, [location.hash]);
+
   const handleLogout = () => {
     userStore.logout(); // вызываем метод logout из store
     toast({

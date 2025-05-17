@@ -25,7 +25,6 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
   const { rentTimeStore, userStore } = useContext(Context)!;
   const [notApprovedDialogOpen, setNotApprovedDialogOpen] = useState(false);
   const onMemberPanelRoot = location.pathname === '/member-panel';
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     async function loadProperties() {
@@ -60,21 +59,19 @@ export default function Leisure({ openAuthDialog }: RentalsProps) {
       );
 
       setFilteredProperties(result);
-      setLoaded(true);
     }
     loadProperties();
   }, [selectedCategory, sortDirection, rentTimeStore, location.pathname]);
 
   useEffect(() => {
-    if (location.hash === '#leisure' && loaded) {
-      // ждем, пока React вставит элементы, а браузер срендерит
-      requestAnimationFrame(() => {
+    if (location.hash === '#leisure') {
+      const timer = setTimeout(() => {
         const el = document.getElementById('leisure');
         if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
-      });
+      }, 400);
+      return () => clearTimeout(timer);
     }
-  }, [loaded, location.hash]);
-
+  }, [location.hash]);
 
   const handleImageLoad = (id: number) => {
     setLoadedImages(prev => ({ ...prev, [id]: true }));

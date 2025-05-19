@@ -148,32 +148,22 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
   };
 
   // Обработка регистрации
-  const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
+    const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
     try {
+      const phone = values.phoneNumber?.trim() || undefined;
       await userStore.registerUser(
         values.email,
         values.password,
         values.fullName,
-        values.phoneNumber,
+        phone,
         values.purpose
       );
-      toast({
-        title: "Account created",
-        description: "Welcome to Business Unit Club. Your request will be reviewed by our team.",
-      });
+      toast({ title: 'Account created', description: 'Welcome to Business Unit Club. Your request will be reviewed.' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error: any) {
-      let message = "Invalid credentials or server error.";
-      if (error.response && error.response.data && error.response.data.message) {
-        message = error.response.data.message;
-      } else if (error.message) {
-        message = error.message;
-      }
-      toast({
-        title: "Registration failed",
-        description: message,
-        variant: "destructive",
-      });
+      let message = 'Invalid credentials or server error.';
+      if (error.response?.data?.message) message = error.response.data.message;
+      toast({ title: 'Registration failed', description: message, variant: 'destructive' });
     }
   };
 

@@ -84,7 +84,7 @@ const Admin = observer(() => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('admin-token');
+    localStorage.removeItem('token');
     userStore.logout();
     navigate('/');
     toast({
@@ -165,7 +165,7 @@ const Admin = observer(() => {
   };
 
   // Если админ не авторизован – показываем форму логина
-  if (!localStorage.getItem('admin-token') || !userStore.admin || !userStore.isAuthAdmin) {
+  if (!localStorage.getItem('token') || !userStore.admin || !userStore.isAuthAdmin) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
         <div className="w-full max-w-md space-y-8">

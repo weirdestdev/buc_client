@@ -8,7 +8,6 @@ const $authHost = axios.create({ baseURL });
 
 const authInterceptor = (config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem('token');
-  console.log(token);
   if (token) {
     // Гарантируем, что headers существует
     if (!config.headers) {

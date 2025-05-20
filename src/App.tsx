@@ -32,7 +32,6 @@ const App = observer(() => {
       .then((data) => {
         userStore.setIsAuth(true);
         userStore.setUser(data); // сохраняем данные пользователя в сторе
-        console.log(data);
       })
       .catch((error) => {
         console.error("Ошибка проверки:", error);
@@ -40,15 +39,6 @@ const App = observer(() => {
       .finally(() => {
         setLoading(false); // Устанавливаем загрузку в false после завершения запроса
       });
-
-      checkAdmin()
-      .then((data) => {
-        userStore.setIsAuthAdmin(true);
-        userStore.setAdmin(data);
-        console.log(data);
-      }).catch((error) => {
-        console.error("Ошибка проверки:", error);
-      })
   }, [userStore]);
 
   // Если загрузка завершена и статус пользователя "blocked", отображаем всегда страницу Blocked

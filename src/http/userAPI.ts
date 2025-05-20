@@ -20,7 +20,6 @@ export const login = async (
 ): Promise<IUser> => {
     const { data } = await $host.post('api/user/login', { email, password });
     localStorage.setItem('token', data.token);
-    console.log(localStorage.getItem('token'));
     return jwtDecode<IUser>(data.token);
 }
 

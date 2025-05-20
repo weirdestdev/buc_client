@@ -193,7 +193,7 @@ export default function Rentals({ openAuthDialog }: RentalsProps) {
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-display font-semibold mb-4">Rentals</h2>
           <p className="text-muted-foreground">
-            Browse our exclusive selection of premium properties for rent in Mallorca's most sought-after locations
+            Browse our picturesque selection of premium properties for rent in Mallorca’s most sought-after locations.
           </p>
         </div>
 

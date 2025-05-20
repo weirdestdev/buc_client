@@ -68,7 +68,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
       result.sort((a, b) =>
         sortDirection === 'asc' ? a.price - b.price : b.price - a.price
       );
-      
+
       setFilteredProperties(result);
       setLoaded(true);
     }
@@ -204,7 +204,7 @@ export default function JustArrived({ openAuthDialog }: JustArrivedProps) {
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-display font-semibold mb-4">Our Portfolio</h2>
           <p className="text-muted-foreground">
-            Explore our newest properties for sale that have just been added to our hand-picked collection
+            Explore our Real Estate catalog regardless if you are a final buyer or an investor. Access Member Panel to see Off-Radar offerings
           </p>
         </div>
 

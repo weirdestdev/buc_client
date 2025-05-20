@@ -129,6 +129,7 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
           title: "Logged in",
           description: "Welcome back to Business Unit Club.",
         });
+        setTimeout(() => window.location.reload(), 500);
       })
       .catch((error: any) => {
         let message = "Invalid credentials or server error.";

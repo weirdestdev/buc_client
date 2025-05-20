@@ -102,7 +102,7 @@ const Admin = observer(() => {
   const confirmUserAction = async () => {
     if (!selectedUser) return;
 
-    const currentAdminRole = userStore.admin?.role; // Теперь получаем роль из userStore.admin
+    const currentAdminRole = userStore.user?.role; // Теперь получаем роль из userStore.admin
 
     // Проверка: модератор не может банить или разбанивать модератора
     if (selectedUser.role === 'moderator' && currentAdminRole !== 'admin') {
@@ -165,7 +165,7 @@ const Admin = observer(() => {
   };
 
   // Если админ не авторизован – показываем форму логина
-  if (!localStorage.getItem('token') || !userStore.admin || !userStore.isAuthAdmin) {
+  if (!localStorage.getItem('token') || userStore.user?.role !== "admin") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
         <div className="w-full max-w-md space-y-8">
@@ -249,25 +249,25 @@ const Admin = observer(() => {
               <ListIcon className="mr-2 h-4 w-4" />
               <span>Listing Management</span>
             </TabsTrigger>
-            {userStore.admin?.role === 'admin' && (
+            {userStore.user?.role === 'admin' && (
               <TabsTrigger value="categories" className="flex items-center">
                 <Tag className="mr-2 h-4 w-4" />
                 <span>Categories</span>
               </TabsTrigger>
             )}
-            {userStore.admin?.role === 'admin' && (
+            {userStore.user?.role === 'admin' && (
               <TabsTrigger value="renttime" className="flex items-center">
                 <Calendar className="mr-2 h-4 w-4" />
                 <span>Rent Time</span>
               </TabsTrigger>
             )}
-            {userStore.admin?.role === 'admin' && (
+            {userStore.user?.role === 'admin' && (
               <TabsTrigger value="docs" className="flex items-center">
                 <FileText className="mr-2 h-4 w-4" />
                 <span>Docs</span>
               </TabsTrigger>
             )}
-            {(userStore.admin?.role === 'admin' || userStore.admin?.role === 'moderator') && (
+            {(userStore.user?.role === 'admin' || userStore.user?.role === 'moderator') && (
               <TabsTrigger value="member-requests" className="flex items-center">
                 <User className="mr-2 h-4 w-4" />
                 <span>Member Requests</span>
@@ -360,7 +360,7 @@ const Admin = observer(() => {
             {/* Таблица пользователей */}
             <UserTable
               users={userWorkStore.users}
-              currentUserRole={userStore.admin?.role || ''}
+              currentUserRole={userStore.user?.role || ''}
               onApprove={(user) => handleUserAction(user, 'approve')}
               onBlock={(user) => handleUserAction(user, 'block')}
               onUnblock={(user) => handleUserAction(user, 'unblock')}
@@ -390,16 +390,16 @@ const Admin = observer(() => {
             <ListingManager />
           </TabsContent>
           <TabsContent value="categories">
-            {userStore.admin?.role === 'admin' && <CategoriesTable />}
+            {userStore.user?.role === 'admin' && <CategoriesTable />}
           </TabsContent>
           <TabsContent value="renttime">
-            {userStore.admin?.role === 'admin' && <RentTimeTable />}
+            {userStore.user?.role === 'admin' && <RentTimeTable />}
           </TabsContent>
           <TabsContent value="docs">
-            {userStore.admin?.role === 'admin' && <AdminDocs />}
+            {userStore.user?.role === 'admin' && <AdminDocs />}
           </TabsContent>
           <TabsContent value="member-requests">
-            {(userStore.admin?.role === 'admin' || userStore.admin?.role === 'moderator') && <MemberRequests />}
+            {(userStore.user?.role === 'admin' || userStore.user?.role === 'moderator') && <MemberRequests />}
           </TabsContent>
         </Tabs>
       </main>

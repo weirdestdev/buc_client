@@ -74,6 +74,12 @@ function PropertyDetailsDialog({
     return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(price);
   };
 
+  const formatNumber = (value: string) => {
+    const num = Number(value);
+    if (isNaN(num)) return value;
+    return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(num);
+  };
+
   const handleSignIn = () => {
     onOpenChange(false);
     setAuthDialogOpen(true);
@@ -148,21 +154,32 @@ function PropertyDetailsDialog({
               {/* Доступность и другие параметры */}
               {property.rental_custom_data
                 .filter(item => item.value && item.value !== "0")
-                .map((item) => (
-                  <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
-                    <div className="text-sm text-muted-foreground">{item.categories_datum.name}</div>
-                    <div className="font-display font-medium flex items-center justify-center mt-1">
-                      {item.categories_datum.name === "Peoples" ? (
-                        <Users className="w-4 h-4 mr-1" />
-                      ) : item.categories_datum.name === "Beds" ? (
-                        <Bed className="w-4 h-4 mr-1" />
-                      ) : null}
-                      {item.value}
-                      {(item.categories_datum.name.includes("Plot Area") ||
-                        item.categories_datum.name.includes("Living Area")) && " m²"}
+                .map((item) => {
+                  const name = item.categories_datum.name;
+                  // флаг, что это именно «площадь»:
+                  const isArea =
+                    name.includes("Plot Area") || name.includes("Living Area");
+
+                  // либо форматируем, либо оставляем как есть
+                  const displayValue = isArea
+                    ? formatNumber(item.value)
+                    : item.value;
+
+                  return (
+                    <div key={item.id} className="bg-secondary rounded-md p-3 text-center">
+                      <div className="text-sm text-muted-foreground">{name}</div>
+                      <div className="font-display font-medium flex items-center justify-center mt-1">
+                        {name === "Peoples" ? (
+                          <Users className="w-4 h-4 mr-1" />
+                        ) : name === "Beds" ? (
+                          <Bed className="w-4 h-4 mr-1" />
+                        ) : null}
+                        {displayValue}
+                        {isArea && <span> m²</span>}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
               <div className="bg-secondary rounded-md p-3 text-center">
                 <div className="text-sm text-muted-foreground">Type</div>
@@ -178,21 +195,21 @@ function PropertyDetailsDialog({
             </div>
           </div>
           <div className="flex flex-col sm:flex-row justify-end sm:space-x-2 space-y-2 sm:space-y-0 mt-2">
-              {property.pdfLink && (
-                <Button
-                  variant="outline"
-                  onClick={() => window.open(property.pdfLink, '_blank')}
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>View PDF</span>
-                </Button>
-              )}
-              <Button onClick={() => setIsModalOpen(true)}>
-                Request Viewing
-                <ArrowRight className="w-4 h-4 ml-2" />
+            {property.pdfLink && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(property.pdfLink, '_blank')}
+                className="flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                <span>View PDF</span>
               </Button>
-            </div>
+            )}
+            <Button onClick={() => setIsModalOpen(true)}>
+              Request Viewing
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       {/* Передаём rentalName из имени объекта недвижимости */}

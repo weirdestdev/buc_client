@@ -40,7 +40,7 @@ interface IListFormData {
 type ActiveTab = 'Our Portfolio' | 'Leisure' | 'Rentals';
 
 const ListingManager = observer(() => {
-    const { rentTimeStore, categoriesStore } = useContext(Context)!;
+  const { rentTimeStore, categoriesStore } = useContext(Context)!;
 
   // === state ===
   const [activeTab, setActiveTab] = useState<ActiveTab>('Our Portfolio');
@@ -163,14 +163,6 @@ const ListingManager = observer(() => {
       priceOnRequest: listing.price === 0,
     });
     setErrors({});
-    setCustomFieldsValues(
-      listing.rental_custom_data
-        ? listing.rental_custom_data.reduce((acc: Record<string, string>, curr: any) => {
-          acc[curr.categoriesDataId] = curr.value;
-          return acc;
-        }, {})
-        : {}
-    );
     let imgs = listing.rentals_images || [];
     if (imgs.every((i: any) => i.order === 0)) {
       imgs = imgs.map((i: any, idx: number) => ({ ...i, order: idx }));
@@ -180,6 +172,7 @@ const ListingManager = observer(() => {
     setPdfFile(null);
     setIsDialogOpen(true);
   };
+
 
   const addFileField = () => {
     // Считаем общее кол-во: существующие + уже добавленные новые
@@ -226,66 +219,66 @@ const ListingManager = observer(() => {
   };
 
   const handleSaveListing = async () => {
-  if (!validateForm()) return;
-  setIsDialogOpen(false);
-  setIsLoading(true);
+    if (!validateForm()) return;
+    setIsDialogOpen(false);
+    setIsLoading(true);
 
-  try {
-    const form = new FormData();
-    form.append('name', formData.name);
-    form.append('description', formData.description);
-    form.append('address', formData.address);
-    form.append('price', formData.priceOnRequest ? '0' : formData.price);
-    if (!formData.priceOnRequest && ['rentals', 'leisure'].includes(formData.status.toLowerCase())) {
-      form.append('unit_of_numeration', formData.unit_of_numeration);
-    }
-    form.append('status', formData.status);
-    form.append('featured', JSON.stringify(formData.featured));
-    form.append('categoryId', formData.categoryId);
-    if (!['our portfolio', 'leisure'].includes(formData.status.toLowerCase())) {
-      form.append('rentTimeId', formData.rentTimeId);
-    }
-
-    // Всегда шлём порядок старых картинок
-    form.append(
-      'updatedImages',
-      JSON.stringify(
-        existingImages.map((img, idx) => ({
-          id: img.id,
-          order: idx
-        }))
-      )
-    );
-
-    // Всегда шлём новые файлы (если они есть)
-    fileFields.forEach(f => {
-      if (f) {
-        form.append('images', f);
+    try {
+      const form = new FormData();
+      form.append('name', formData.name);
+      form.append('description', formData.description);
+      form.append('address', formData.address);
+      form.append('price', formData.priceOnRequest ? '0' : formData.price);
+      if (!formData.priceOnRequest && ['rentals', 'leisure'].includes(formData.status.toLowerCase())) {
+        form.append('unit_of_numeration', formData.unit_of_numeration);
       }
-    });
+      form.append('status', formData.status);
+      form.append('featured', JSON.stringify(formData.featured));
+      form.append('categoryId', formData.categoryId);
+      if (!['our portfolio', 'leisure'].includes(formData.status.toLowerCase())) {
+        form.append('rentTimeId', formData.rentTimeId);
+      }
 
-    // PDF
-    if (pdfFile) {
-      form.append('pdf', pdfFile);
+      // Всегда шлём порядок старых картинок
+      form.append(
+        'updatedImages',
+        JSON.stringify(
+          existingImages.map((img, idx) => ({
+            id: img.id,
+            order: idx
+          }))
+        )
+      );
+
+      // Всегда шлём новые файлы (если они есть)
+      fileFields.forEach(f => {
+        if (f) {
+          form.append('images', f);
+        }
+      });
+
+      // PDF
+      if (pdfFile) {
+        form.append('pdf', pdfFile);
+      }
+
+      if (editingListing) {
+        await rentTimeStore.updateRental(editingListing.id, form);
+      } else {
+        await rentTimeStore.addRental(form);
+      }
+
+      await rentTimeStore.loadRentals();
+      setFileFields([]);
+      setPdfFile(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    if (editingListing) {
-      await rentTimeStore.updateRental(editingListing.id, form);
-    } else {
-      await rentTimeStore.addRental(form);
-    }
-
-    await rentTimeStore.loadRentals();
-    setFileFields([]);
-    setPdfFile(null);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-   // === rendering helpers ===
+  // === rendering helpers ===
   const renderExistingImages = () => (
     <div className={`flex flex-wrap gap-2 mt-2 ${isTooManyImages ? 'border-2 border-red-500 p-2 rounded' : ''}`}>
       {existingImages.map((imgObj: any, idx: number) => (
@@ -336,24 +329,27 @@ const ListingManager = observer(() => {
   );
 
   const renderCustomFields = () => {
-    const cat = categoriesStore.categories.find((c: any) => c.id.toString() === formData.categoryId);
+    const cat = categoriesStore.categories.find(c => c.id.toString() === formData.categoryId);
     if (!cat?.customFields) return null;
+
     return (
       <div className="space-y-2">
         <Label>Custom Fields</Label>
         {cat.customFields.map((field: any) => {
-          let type: 'text' | 'number' | 'date' = 'text';
-          if (field.type === 'int' || field.type === 'double') type = 'number';
-          if (field.type === 'date') type = 'date';
+          const type = field.type === 'date'
+            ? 'date'
+            : (field.type === 'int' || field.type === 'double')
+              ? 'number'
+              : 'text';
           return (
             <div key={field.id} className="space-y-1">
               <Label htmlFor={`custom-${field.id}`}>{field.name}</Label>
               <Input
                 id={`custom-${field.id}`}
                 type={type}
-                value={customFieldsValues[field.id] || ''}
+                value={customFieldsValues[field.id] ?? ''}
                 onChange={(e) =>
-                  setCustomFieldsValues((v) => ({ ...v, [field.id]: e.target.value }))
+                  setCustomFieldsValues(v => ({ ...v, [field.id]: e.target.value }))
                 }
               />
             </div>

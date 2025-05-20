@@ -129,6 +129,7 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
           title: "Logged in",
           description: "Welcome back to Business Unit Club.",
         });
+        setTimeout(() => window.location.reload(), 500);
       })
       .catch((error: any) => {
         let message = "Invalid credentials or server error.";
@@ -142,9 +143,7 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
           description: message,
           variant: "destructive",
         });
-      }).finally(() => {
-        setTimeout(() => window.location.reload(), 500);
-      });
+      })
   };
 
   // Обработка регистрации
@@ -157,9 +156,10 @@ export default function AuthDialog({ open, onOpenChange, defaultTab = "login" }:
         values.fullName,
         phone,
         values.purpose
-      );
-      toast({ title: 'Account created', description: 'Welcome to Business Unit Club. Your request will be reviewed.' });
-      setTimeout(() => window.location.reload(), 500);
+      ).then(() => {
+        toast({ title: 'Account created', description: 'Welcome to Business Unit Club. Your request will be reviewed.' });
+        setTimeout(() => window.location.reload(), 500);
+      });
     } catch (error: any) {
       let message = 'Invalid credentials or server error.';
       if (error.response?.data?.message) message = error.response.data.message;

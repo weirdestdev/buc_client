@@ -66,7 +66,7 @@ const Admin = observer(() => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await userStore.loginAdmin(email, password);
+      await userStore.loginUser(email, password);
       toast({
         title: 'Login successful',
         description: 'Welcome to the admin dashboard.',
